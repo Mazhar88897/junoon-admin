@@ -183,25 +183,39 @@ const Page = () => {
     e.preventDefault();
     const token = sessionStorage.getItem('Authorization');
     
-    const formDataToSend = new FormData();
-    formDataToSend.append('title', formData.title);
-    formDataToSend.append('description', formData.description);
-    formDataToSend.append('exam_type', 'university');
-    if (formData.thumbnail) {
-      formDataToSend.append('thumbnail', formData.thumbnail);
-    }
-    formDataToSend.append('subject', formData.subject);
-    formDataToSend.append('track', formData.track);
-    formDataToSend.append('university', formData.university);
-    formDataToSend.append('sections', JSON.stringify(formData.sections));
+    // Create the data object first
+    const submitData = {
+      title: formData.title,
+      description: formData.description,
+      exam_type: 'university',
+      thumbnail: formData.thumbnail || null,
+      subject: parseInt(formData.subject),
+      track: parseInt(formData.track),
+      university: parseInt(formData.university),
+      sections: formData.sections.map(section => ({
+        name: section.name,
+        description: section.description,
+        questions: section.questions.map(question => ({
+          text: question.text,
+          graphics: null,
+          marks: parseFloat(question.marks).toFixed(2), // Ensure marks are in "2.00" format
+          choices: question.choices.map(choice => ({
+            text: choice.text,
+            is_correct: choice.is_correct,
+            graphics: null
+          }))
+        }))
+      }))
+    };
 
     try {
-      const response = await fetch('https://junoon-vatb.onrender.com/api/exams_app/track-exams/create/', {
+      const response = await fetch('https://junoon-vatb.onrender.com/api/exams_app/university-exams/create/', {
         method: 'POST',
         headers: {
           'Authorization': token || '',
+          'Content-Type': 'application/json',
         },
-        body: formDataToSend,
+        body: JSON.stringify(submitData),
       });
 
       if (response.ok) {
