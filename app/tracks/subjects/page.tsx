@@ -1,8 +1,8 @@
-
 'use client';
 
 import { redirect, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 interface Chapter {
   id: number;
@@ -24,6 +24,7 @@ interface Subject {
 }
 
 export default function SubjectsPage() {
+  const router = useRouter();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -81,29 +82,29 @@ export default function SubjectsPage() {
   }
 
   if (subjects.length === 0) {
-      return <div className="p-6">No subjects found for this track.</div>;
+    return <div className="p-6">No subjects found for this track.</div>;
   }
-  const router = useRouter();
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 onClick={()=>{ console.log(subjects)}} className="text-3xl font-bold mb-6">Subjects</h1>
       <div className="space-y-8">
         {subjects.map((subject) => (
-
           <div onClick={()=>{
             sessionStorage.setItem('id_subject', subject.id.toString());
             sessionStorage.setItem('subject_name', subject.name);
             sessionStorage.setItem('subject_description', subject.description);
             router.push('/tracks/subjects/create'); // Client-side navigation
-
-          
           }} key={subject.id} className="border rounded-xl p-4 shadow">
             {subject.thumbnail && (
-              <img
-                src={subject.thumbnail}
-                alt={subject.name}
-                className="w-32 h-auto object-cover rounded mb-4"
-              />
+              <div className="relative w-32 h-32 mb-4">
+                <Image
+                  src={subject.thumbnail}
+                  alt={subject.name}
+                  fill
+                  className="object-cover rounded"
+                />
+              </div>
             )}
             <h2 className="text-2xl font-semibold mb-2">{subject.name}</h2>
             <p className="text-gray-700 mb-4">{subject.description}</p>
@@ -116,15 +117,14 @@ export default function SubjectsPage() {
                     <div key={chapter.id} className="border rounded p-3 bg-gray-50">
                       <h4 className="text-lg font-medium">{chapter.name}</h4>
                       {chapter.description && <p className="text-gray-600 text-sm">{chapter.description}</p>}
-                      {/* Display other chapter details if needed */}
                     </div>
                   ))}
                 </div>
               </div>
             )}
-             {!subject.chapters.length && (
-                 <p className="text-gray-600 text-sm">No chapters available for this subject.</p>
-             )}
+            {!subject.chapters.length && (
+              <p className="text-gray-600 text-sm">No chapters available for this subject.</p>
+            )}
           </div>
         ))}
       </div>
