@@ -181,7 +181,7 @@ const Page = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    const token = sessionStorage.getItem('Authorization');
     
     const formDataToSend = new FormData();
     formDataToSend.append('title', formData.title);
@@ -196,7 +196,6 @@ const Page = () => {
     formDataToSend.append('sections', JSON.stringify(formData.sections));
 
     try {
-      
       const response = await fetch('https://junoon-vatb.onrender.com/api/exams_app/track-exams/create/', {
         method: 'POST',
         headers: {
