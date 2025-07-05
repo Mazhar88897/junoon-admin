@@ -183,12 +183,14 @@ const Page = () => {
     e.preventDefault();
     const token = sessionStorage.getItem('Authorization');
     
-    // Create the data object first
-    const submitData = {
+    // Create FormData for file upload
+    const formDataToSend = new FormData();
+    
+    // Add the JSON data as a string
+    const jsonData = {
       title: formData.title,
       description: formData.description,
       exam_type: 'university',
-      thumbnail: formData.thumbnail || null,
       subject: parseInt(formData.subject),
       track: parseInt(formData.track),
       university: parseInt(formData.university),
@@ -198,7 +200,7 @@ const Page = () => {
         questions: section.questions.map(question => ({
           text: question.text,
           graphics: null,
-          marks: parseFloat(question.marks).toFixed(2), // Ensure marks are in "2.00" format
+          marks: parseFloat(question.marks).toFixed(2),
           choices: question.choices.map(choice => ({
             text: choice.text,
             is_correct: choice.is_correct,
@@ -208,14 +210,21 @@ const Page = () => {
       }))
     };
 
+    // Add the JSON data
+    formDataToSend.append('data', JSON.stringify(jsonData));
+
+    // Add the thumbnail file if it exists
+    if (formData.thumbnail) {
+      formDataToSend.append('thumbnail', formData.thumbnail);
+    }
+
     try {
       const response = await fetch('https://junoon-vatb.onrender.com/api/exams_app/university-exams/create/', {
         method: 'POST',
         headers: {
           'Authorization': token || '',
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(submitData),
+        body: formDataToSend,
       });
 
       if (response.ok) {

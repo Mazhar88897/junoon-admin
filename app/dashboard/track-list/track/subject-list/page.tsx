@@ -135,7 +135,7 @@ export default function SubjectsPage() {
                     sessionStorage.setItem('id_subject', row.id.toString());
                     sessionStorage.setItem('subject_name', row.name);
                     sessionStorage.setItem('subject_description', row.description);
-                    router.push('/tracks/subjects/create');
+                    router.push('/dashboard/track-list/track/subject-list/subject');
                   }}
                 >
                   <td className="p-3 font-semibold text-slate-800">{(page - 1) * pageSize + i + 1}</td>

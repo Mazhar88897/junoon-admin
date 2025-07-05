@@ -14,6 +14,7 @@ interface Track {
   modified_on: string;
   created_by: string;
   modified_by: string | null;
+  has_university: boolean;
 }
 
 // Helper for avatar color
@@ -160,9 +161,9 @@ export default function ExamsPage() {
         <h1 className="text-xl font-bold">Tracks</h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold TEXT-SM py-1 px-4 rounded"
+          className="bg-purple-800 hover:bg-purple-700 text-white font-bold TEXT-SM py-1 px-4 rounded"
         >
-          Create New Track
+          + Create New Track
         </button>
       </div>
       <div className='border-grey-800 border-2 rounded-lg p-4'>
@@ -198,7 +199,8 @@ export default function ExamsPage() {
                 className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
                 onClick={() => {
                   sessionStorage.setItem('id_track', row.id.toString());
-                  router.push('/tracks/subjects');
+                  sessionStorage.setItem('has_university', row.has_university.toString());
+                  router.push('/dashboard/track-list/track');
                 }}
               >
                 <td className="p-3 font-semibold text-slate-800">{(page - 1) * pageSize + i + 1}</td>
@@ -265,7 +267,7 @@ export default function ExamsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
           <div className="relative w-full max-w-md mx-auto bg-white rounded-lg shadow-2xl p-0">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#6d7efc] rounded-t-lg">
+            <div className="flex items-center justify-between px-6 py-4 bg-purple-500 rounded-t-lg">
               <h3 className="text-lg font-semibold text-white">Create New Track</h3>
               <button
                 onClick={() => { setIsModalOpen(false); setError(''); }}
@@ -303,7 +305,7 @@ export default function ExamsPage() {
               <div>
                 <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Price</label>
                 <input
-                  type="text"
+                  type="number"
                   name="price"
                   id="price"
                   className="block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#6d7efc] focus:border-[#6d7efc]"
@@ -346,7 +348,7 @@ export default function ExamsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#6d7efc] text-white rounded-md font-medium hover:bg-[#5a6edc] focus:outline-none"
+                  className="px-4 py-2 bg-purple-800 text-white rounded-md font-medium hover:bg-[#5a6edc] focus:outline-none"
                 >
                   Create
                 </button>
