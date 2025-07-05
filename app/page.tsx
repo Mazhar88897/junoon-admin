@@ -134,7 +134,7 @@ export default function LandingPage() {
             <div className="relative">
               <div className="relative z-10">
                 <Image
-                  src="/thumbnail.png"
+                  src="/thumbnail.svg"
                   alt="Junoon App Showcase"
                   width={600}
                   height={400}
