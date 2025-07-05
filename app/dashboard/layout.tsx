@@ -6,7 +6,14 @@ import { Menu, ChevronDown, ChevronRight, User, LogOut, Settings, Activity, User
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-const sidebarItems = [
+type SidebarItem = {
+  label: string;
+  icon: React.ReactElement;
+  children?: { label: string; href: string; }[];
+  href?: string;
+};
+
+const sidebarItems: SidebarItem[] = [
   {
     label: "Dashboards",
     icon: <Menu className="w-4 h-4" />,
