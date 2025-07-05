@@ -12,12 +12,8 @@ const sidebarItems = [
     icon: <Menu className="w-4 h-4" />,
     children: [
       { label: "Track Dashboard", href: "/dashboard/track-list" },
-     
-     
     ],
   },
-
-
 ];
 
 function Sidebar() {
@@ -55,13 +51,13 @@ function Sidebar() {
                     </ul>
                   )}
                 </>
-              ) : (
-                <Link href={item.href!} className="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 transition font-medium text-sm">
+              ) : item.href ? (
+                <Link href={item.href} className="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 transition font-medium text-sm">
                   {item.icon}
                   <span className="flex-1 truncate text-left">{item.label}</span>
                   <ChevronRight className="w-4 h-4 text-slate-400" />
                 </Link>
-              )}
+              ) : null}
             </li>
           ))}
         </ul>
