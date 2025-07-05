@@ -34,7 +34,7 @@ export default function AuthPage() {
       setCarouselIdx((idx) => (idx + 1) % carouselSlides.length);
     }, 3500);
     return () => clearInterval(interval);
-  }, []);
+  }, [carouselSlides.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +150,7 @@ export default function AuthPage() {
             <a href="#" className="text-[#1A4D2E] text-sm hover:underline">Google</a>
           </div>
           <div className="text-xs text-gray-500 text-center">
-            I don't have an account? <a href="#" className="text-[#1A4D2E] hover:underline">Try 15 days free</a>
+            I don&apos;t have an account? <a href="#" className="text-[#1A4D2E] hover:underline">Try 15 days free</a>
           </div>
         </div>
         <div className="mt-8 text-xs text-gray-400 text-center space-x-4">
