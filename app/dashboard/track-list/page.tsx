@@ -55,7 +55,7 @@ export default function ExamsPage() {
         throw new Error('No authorization token found');
       }
 
-      const response = await fetch('https://junoon-vatb.onrender.com/api/tracks_app/tracks/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/tracks/`, {
         headers: {
           'Authorization': token,
         },

@@ -161,7 +161,7 @@ const Page = () => {
               throw new Error('No authorization token found');
               }
     
-      const response = await fetch('https://junoon-vatb.onrender.com/api/exams_app/track-exams/create/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exams_app/track-exams/create/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

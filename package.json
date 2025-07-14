@@ -27,7 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
-    "dotenv": "^16.5.0",
+    "dotenv": "^16.6.1",
     "emailjs": "^4.0.3",
     "emailjs-com": "^3.2.0",
     "lucide-react": "^0.290.0",

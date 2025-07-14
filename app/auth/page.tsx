@@ -1,5 +1,4 @@
-'use client';
-
+ 'use client'
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -41,7 +40,7 @@ export default function AuthPage() {
     setError('');
 
     try {
-      const response = await fetch(`https://junoon-vatb.onrender.com/api/auth/token-login/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/token-login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
