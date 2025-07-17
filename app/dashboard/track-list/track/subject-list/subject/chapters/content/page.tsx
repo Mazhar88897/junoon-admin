@@ -2,24 +2,10 @@
 import Link from "next/link";
 // chapter /  recorded lecture  / add note
 const categories = [
+ 
   {
-    key: "/dashboard/track-list/track/subject-list/subject/exam",
-    name: "Chapter Management",
-    subCount: 4,
-    description: "Website Design & Develop the website with web applications ",
-    color: "bg-violet-500",
-    code: "GD",
-    tags: [
-      { label: "Photoshop", color: "bg-indigo-100 text-indigo-700 font-semibold" },
-      { label: "Adobe Illustrator", color: "bg-red-100 text-red-700 font-semibold" },
-      { label: "Logo Design", color: "bg-cyan-100 text-cyan-700 font-semibold" },
-      { label: "Drawing", color: "bg-yellow-100 text-yellow-700 font-semibold" },
-      { label: "Figma", color: "bg-slate-100 text-slate-700 font-semibold" },
-    ],
-  },
-   {
-    key: "/dashboard/track-list/track/subject-list/subject/chapters",
-    name: " Content Mnagement",
+    key: "/dashboard/track-list/track/subject-list/subject/recorded-lecture",
+    name: " Recorded lecture",
     subCount: 5,
     description: "Website Design & Develop the website with Design",
     color: "bg-yellow-400",
@@ -32,6 +18,22 @@ const categories = [
       { label: "HTML & CSS Grid", color: "bg-slate-100 text-slate-700 font-semibold" },
     ],
   },
+  {
+    key: "/dashboard/track-list/track/subject-list/subject/notes",
+    name: "Add Notes",
+    subCount: 4,
+    description: "Website Design & Develop the website with web applications ",
+    color: "bg-red-300",
+    code: "GD",
+    tags: [
+      { label: "Photoshop", color: "bg-indigo-100 text-indigo-700 font-semibold" },
+      { label: "Adobe Illustrator", color: "bg-red-100 text-red-700 font-semibold" },
+      { label: "Logo Design", color: "bg-cyan-100 text-cyan-700 font-semibold" },
+      { label: "Drawing", color: "bg-yellow-100 text-yellow-700 font-semibold" },
+      { label: "Figma", color: "bg-slate-100 text-slate-700 font-semibold" },
+    ],
+  },
+
 
 
 ];

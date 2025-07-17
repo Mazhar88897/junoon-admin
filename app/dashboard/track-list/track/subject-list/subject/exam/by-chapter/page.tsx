@@ -165,14 +165,14 @@ const Page = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token// Uncomment if token is needed
+          'Authorization': token
         },
         body: JSON.stringify(submitData),
       });
       
       if (response.ok) {
         alert('Exam created successfully!');
-        // Optionally redirect or clear form
+    
       } else {
         const errorData = await response.json();
         alert(`Failed to create exam: ${errorData.message || 'Unknown error'}`);

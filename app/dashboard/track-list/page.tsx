@@ -3,6 +3,10 @@
 import Link from 'next/link';
 import { redirect, useRouter } from 'next/navigation';
 import React, { useEffect, useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 interface Track {
   id: number;
@@ -41,6 +45,7 @@ export default function ExamsPage() {
     description: '',
     price: '',
     thumbnail: null as File | null,
+    thumbnailPreview: '',
     created_by: '',
   });
   const [search, setSearch] = useState('');
@@ -84,7 +89,12 @@ export default function ExamsPage() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewTrackData({ ...newTrackData, thumbnail: e.target.files ? e.target.files[0] : null });
+    const file = e.target.files ? e.target.files[0] : null;
+    setNewTrackData(prev => ({
+      ...prev,
+      thumbnail: file,
+      thumbnailPreview: file ? URL.createObjectURL(file) : '',
+    }));
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -125,7 +135,7 @@ export default function ExamsPage() {
       }
 
       setIsModalOpen(false);
-      setNewTrackData({ name: '', description: '', price: '', thumbnail: null, created_by: '', });
+      setNewTrackData({ name: '', description: '', price: '', thumbnail: null, thumbnailPreview: '', created_by: '', });
       fetchTracks();
 
     } catch (err) {
@@ -267,7 +277,7 @@ export default function ExamsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
           <div className="relative w-full max-w-md mx-auto bg-white rounded-lg shadow-2xl p-0">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-purple-500 rounded-t-lg">
+            <div className="flex items-center justify-between px-6 py-4 bg-purple-800 rounded-t-lg">
               <h3 className="text-lg font-semibold text-white">Create New Track</h3>
               <button
                 onClick={() => { setIsModalOpen(false); setError(''); }}
@@ -293,14 +303,14 @@ export default function ExamsPage() {
               </div>
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  name="description"
-                  id="description"
-                  rows={3}
-                  className="block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-[#6d7efc] focus:border-[#6d7efc]"
-                  value={newTrackData.description}
-                  onChange={handleInputChange}
-                ></textarea>
+                <div className="bg-white rounded border border-gray-300">
+                  <ReactQuill
+                    value={newTrackData.description}
+                    onChange={(val: string) => setNewTrackData(prev => ({ ...prev, description: val }))}
+                    theme="snow"
+                    className="min-h-[120px]"
+                  />
+                </div>
               </div>
               <div>
                 <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Price</label>
@@ -323,6 +333,16 @@ export default function ExamsPage() {
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   onChange={handleFileChange}
                 />
+                {newTrackData.thumbnailPreview && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 mb-2">Preview:</p>
+                    <img
+                      src={newTrackData.thumbnailPreview}
+                      alt="Thumbnail preview"
+                      className="w-24 h-24 object-cover rounded border"
+                    />
+                  </div>
+                )}
               </div>
               <div>
                 <label htmlFor="created_by" className="block text-sm font-medium text-gray-700 mb-1">Created By</label>

@@ -3,6 +3,10 @@
 import { redirect, useRouter } from 'next/navigation';
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 interface Chapter {
   id: number;
@@ -31,6 +35,15 @@ export default function SubjectsPage() {
   const [trackId, setTrackId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalError, setModalError] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    thumbnail: null as File | null,
+    thumbnailPreview: '',
+  });
   const pageSize = 10;
 
   useEffect(() => {
@@ -89,6 +102,69 @@ export default function SubjectsPage() {
   const pageCount = Math.ceil(filteredData.length / pageSize);
   const pagedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData(prev => ({
+        ...prev,
+        thumbnail: file,
+        thumbnailPreview: URL.createObjectURL(file)
+      }));
+    }
+  };
+
+  const handleAddSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setModalError('');
+    try {
+      const token = sessionStorage.getItem('Authorization');
+      const track = sessionStorage.getItem('id_track');
+      if (!token) throw new Error('No authorization token found');
+      if (!track) throw new Error('No track ID found');
+      const formDataToSend = new FormData();
+      formDataToSend.append('track', track);
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('description', formData.description);
+      if (formData.thumbnail) {
+        formDataToSend.append('thumbnail', formData.thumbnail);
+      }
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/subjects/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+        },
+        body: formDataToSend,
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create subject');
+      }
+      setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
+      setShowModal(false);
+      // Refresh subjects
+      setLoading(true);
+      const refreshed = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/subjects/?track_id=${track}`, {
+        headers: { 'Authorization': token },
+      });
+      if (refreshed.ok) {
+        const data = await refreshed.json();
+        setSubjects(data);
+      }
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsSubmitting(false);
+      setLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
+    setModalError('');
+  };
+
   if (error) {
     return <div className="text-red-500 p-6">Error: {error}</div>;
   }
@@ -103,7 +179,15 @@ export default function SubjectsPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-xl font-bold mb-6">Subjects</h1>
+      <h1 className="text-xl font-bold mb-6 flex items-center justify-between">
+        <span>Subjects</span>
+        <button
+          onClick={() => setShowModal(true)}
+          className="px-4 py-2 text-sm bg-purple-800 text-white rounded-lg font-bold hover:bg-purple-700 transition-colors"
+        >
+          + Add New Subject
+        </button>
+      </h1>
       <div className='border-grey-800 border-2 rounded-lg p-4'>
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <input
@@ -190,6 +274,86 @@ export default function SubjectsPage() {
           </div>
         </div>
       </div>
+      {/* Add New Subject Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="relative w-full max-w-2xl mx-auto bg-white rounded-lg shadow-2xl p-0 max-h-[70vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-8 py-2 bg-purple-800 rounded-t-lg">
+              <h3 className="text-lg font-semibold text-white">Add New Subject</h3>
+              <button
+                onClick={closeModal}
+                className="text-white hover:text-gray-200 text-2xl font-bold focus:outline-none"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleAddSubject} className="px-8 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name<span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-[#6d7efc] focus:border-[#6d7efc]"
+                  placeholder="Enter subject name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <div className="bg-white rounded border border-gray-300">
+                  <ReactQuill
+                    value={formData.description}
+                    onChange={(val: string) => setFormData(prev => ({ ...prev, description: val }))}
+                    theme="snow"
+                    className="min-h-[120px]"
+                    placeholder="Enter subject description..."
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Thumbnail</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {formData.thumbnailPreview && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 mb-2">Preview:</p>
+                    <img
+                      src={formData.thumbnailPreview}
+                      alt="Thumbnail preview"
+                      className="w-24 h-24 object-cover rounded border"
+                    />
+                  </div>
+                )}
+              </div>
+              {modalError && (
+                <div className="text-red-500 text-sm mt-2 text-center">{modalError}</div>
+              )}
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 focus:outline-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-purple-800 text-white rounded-md font-medium hover:bg-[#5a6edc] focus:outline-none disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Creating...' : 'Create Subject'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
