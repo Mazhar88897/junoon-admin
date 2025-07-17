@@ -126,9 +126,7 @@ export default function SubjectsPage() {
       formDataToSend.append('track', track);
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
-      if (formData.thumbnail) {
-        formDataToSend.append('thumbnail', formData.thumbnail);
-      }
+      formDataToSend.append('thumbnail', formData.thumbnail || '');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/subjects/`, {
         method: 'POST',
         headers: {
@@ -231,7 +229,14 @@ export default function SubjectsPage() {
                     )}
                   </td>
                   <td className="p-3 font-bold ">{row.name}</td>
-                  <td className="p-3 text-gray-700 max-w-xs text-slate-600 truncate" title={row.description}>{row.description}</td>
+                  <td
+                    className="p-3 text-gray-700 max-w-xs text-slate-600 truncate"
+                    title={row.description}
+                  >
+                    <span
+                      dangerouslySetInnerHTML={{ __html: row.description }}
+                    />
+                  </td>
                   <td className="p-3">{row.chapters.length}</td>
                   <td className="p-3 text-right">
                     <button className="px-2 py-1 text-gray-400 hover:text-gray-700" tabIndex={-1} onClick={e => e.stopPropagation()}>
