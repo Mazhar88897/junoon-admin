@@ -70,46 +70,48 @@ const trafficSources = [
 export default function DashboardPage() {
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-gray-50 p-6">
-        <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
-        <p className="text-gray-500 mb-6">Welcome to Learning Management Dashboard.</p>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Dashboard</h1>
+        <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-6">Welcome to Learning Management Dashboard.</p>
+        
+        {/* Students Enrollment & Top Categories */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
           {/* Students Enrollment */}
-          <Card className="col-span-2">
-            <CardHeader className="pb-2 flex flex-row items-start justify-between">
+          <Card className="xl:col-span-2">
+            <CardHeader className="pb-2 flex flex-col sm:flex-row items-start justify-between gap-2">
               <div>
-                <CardTitle className="text-lg">Students Enrolment</CardTitle>
-                <CardDescription className="text-sm">In last 30 days enrolment of students</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Students Enrolment</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">In last 30 days enrolment of students</CardDescription>
               </div>
               <div className="text-gray-300"><svg width="18" height="18" fill="none"><circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5" opacity=".3"/></svg></div>
             </CardHeader>
-            <CardContent className="flex flex-row items-end justify-between pt-0 pb-4">
+            <CardContent className="flex flex-col lg:flex-row items-start lg:items-end justify-between pt-0 pb-4 gap-4">
               {/* Stats */}
-              <div className="flex flex-row gap-12 items-end">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 lg:gap-12 items-start sm:items-end w-full lg:w-auto">
                 <div className="flex flex-col items-start">
-                  <div className="text-3xl font-bold">{studentsEnrollment.thisMonth.value}</div>
-                  <div className="text-sm flex items-center gap-1 text-red-500 font-semibold">
+                  <div className="text-2xl sm:text-3xl font-bold">{studentsEnrollment.thisMonth.value}</div>
+                  <div className="text-xs sm:text-sm flex items-center gap-1 text-red-500 font-semibold">
                     ↓ {studentsEnrollment.thisMonth.change}%
                   </div>
                   <div className="text-xs text-gray-400 mt-1">This Month</div>
                 </div>
                 <div className="flex flex-col items-start">
-                  <div className="text-2xl font-bold">{studentsEnrollment.thisWeek.value}</div>
-                  <div className="text-sm flex items-center gap-1 text-green-500 font-semibold">
+                  <div className="text-xl sm:text-2xl font-bold">{studentsEnrollment.thisWeek.value}</div>
+                  <div className="text-xs sm:text-sm flex items-center gap-1 text-green-500 font-semibold">
                     ↑ {studentsEnrollment.thisWeek.change}%
                   </div>
                   <div className="text-xs text-gray-400 mt-1">This Week</div>
                 </div>
               </div>
               {/* Bar Chart */}
-              <div className="flex-1 flex items-end justify-end h-24 ml-8">
-                <div className="flex items-end gap-2 w-full max-w-[320px]">
+              <div className="flex-1 flex items-end justify-end h-20 sm:h-24 w-full lg:ml-8">
+                <div className="flex items-end gap-1 sm:gap-2 w-full max-w-[280px] sm:max-w-[320px]">
                   {studentsEnrollment.chart.map((v, i, arr) => (
                     <Tooltip key={i}>
                       <TooltipTrigger asChild>
                         <div
-                          className={`w-4 rounded-t ${i === arr.length - 1 ? 'bg-blue-500' : 'bg-blue-200'} transition-all`}
-                          style={{ height: `${v * 17}px` }}
+                          className={`w-3 sm:w-4 rounded-t ${i === arr.length - 1 ? 'bg-blue-500' : 'bg-blue-200'} transition-all`}
+                          style={{ height: `${v * 15}px` }}
                         />
                       </TooltipTrigger>
                       <TooltipContent>Day {i + 1}: {v * 10} students</TooltipContent>
@@ -119,21 +121,22 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+          
           {/* Top Categories */}
-          <Card className="col-span-1">
+          <Card className="xl:col-span-1">
             <CardHeader>
-              <CardTitle>Top Categories</CardTitle>
-              <CardDescription>In last 15 days buy and sells overview.</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Top Categories</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">In last 15 days buy and sells overview.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col md:flex-row gap-4 items-start">
+              <div className="flex flex-col gap-4 items-start">
                 {/* Bars */}
-                <div className="flex-1 space-y-4 w-full max-w-md">
+                <div className="flex-1 space-y-3 sm:space-y-4 w-full">
                   {topCategories.map((cat, i) => (
                     <div key={cat.name} className="flex items-center gap-2">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex w-full h-3 rounded overflow-hidden cursor-pointer">
+                          <div className="flex w-full h-2 sm:h-3 rounded overflow-hidden cursor-pointer">
                             <div className={`${cat.color}`} style={{ width: `${cat.value}%` }} />
                             <div className={`${cat.light}`} style={{ width: `${cat.rest}%` }} />
                           </div>
@@ -144,11 +147,11 @@ export default function DashboardPage() {
                   ))}
                 </div>
                 {/* Legend */}
-                <div className="flex flex-col gap-3 min-w-[160px]">
+                <div className="flex flex-col gap-2 sm:gap-3 w-full">
                   {topCategories.map((cat) => (
                     <div key={cat.name} className="flex items-center gap-2">
                       <span className={`w-3 h-3 rounded ${cat.color}`} />
-                      <span className="text-xs text-gray-700">{cat.name}</span>
+                      <span className="text-xs text-gray-700 truncate">{cat.name}</span>
                     </div>
                   ))}
                 </div>
@@ -156,52 +159,54 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+        
         {/* Sales Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
           <Card>
             <CardHeader>
-              <CardTitle>Total Sales</CardTitle>
-              <CardDescription>vs. last month</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Total Sales</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">vs. last month</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">${salesStats.total.value.toLocaleString()}</div>
-              <div className="text-sm text-green-500 flex items-center gap-1">
+              <div className="text-2xl sm:text-3xl font-bold">${salesStats.total.value.toLocaleString()}</div>
+              <div className="text-xs sm:text-sm text-green-500 flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" /> {salesStats.total.change}%
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>This week so far</CardTitle>
-              <CardDescription>vs. last week</CardDescription>
+              <CardTitle className="text-base sm:text-lg">This week so far</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">vs. last week</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">${salesStats.week.value.toLocaleString()}</div>
-              <div className="text-sm text-green-500 flex items-center gap-1">
+              <div className="text-2xl sm:text-3xl font-bold">${salesStats.week.value.toLocaleString()}</div>
+              <div className="text-xs sm:text-sm text-green-500 flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" /> {salesStats.week.change}%
               </div>
             </CardContent>
           </Card>
         </div>
+        
         {/* Courses, Instructors, Support Requests */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
           {/* Top Courses */}
           <Card>
             <CardHeader>
-              <CardTitle>Top Courses</CardTitle>
-              <CardDescription>Weekly</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Top Courses</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Weekly</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {topCourses.map((course) => (
-                  <div key={course.code} className="flex items-center justify-between">
-                    <Badge className="mr-2">{course.code}</Badge>
-                    <div className="flex-1">
-                      <div className="font-medium">{course.name}</div>
+                  <div key={course.code} className="flex items-center justify-between gap-2">
+                    <Badge className="mr-2 text-xs">{course.code}</Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm sm:text-base truncate">{course.name}</div>
                       <div className="text-xs text-gray-400">${course.price.toFixed(2)}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">${course.revenue.toLocaleString()}</div>
+                      <div className="font-semibold text-sm sm:text-base">${course.revenue.toLocaleString()}</div>
                       <div className="text-xs text-gray-400">{course.sales} Sold</div>
                     </div>
                   </div>
@@ -209,53 +214,55 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+          
           {/* Top Instructors */}
           <Card>
             <CardHeader className="flex-row justify-between items-center">
-              <CardTitle>Top Instructors</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Top Instructors</CardTitle>
               <Button variant="link" className="ml-auto text-xs p-0 h-auto">View All</Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {topInstructors.map((inst) => (
-                  <div key={inst.name} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">
+                  <div key={inst.name} className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-xs">
                       {inst.name.split(" ").map((n) => n[0]).join("")}
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{inst.name}</div>
-                      <div className="text-xs text-gray-400">{inst.email}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm sm:text-base truncate">{inst.name}</div>
+                      <div className="text-xs text-gray-400 truncate">{inst.email}</div>
                     </div>
                     <div className="flex items-center gap-1">
-                      {[...Array(Math.floor(inst.rating))].map((_, i) => <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />)}
-                      {inst.rating % 1 !== 0 && <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 opacity-50" />}
+                      {[...Array(Math.floor(inst.rating))].map((_, i) => <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />)}
+                      {inst.rating % 1 !== 0 && <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400 opacity-50" />}
                     </div>
-                    <div className="text-xs text-gray-400">{inst.reviews} Reviews</div>
+                    <div className="text-xs text-gray-400 hidden sm:block">{inst.reviews} Reviews</div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
+          
           {/* Support Requests */}
           <Card>
             <CardHeader className="flex-row justify-between items-center">
-              <CardTitle>Support Requests</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Support Requests</CardTitle>
               <Button variant="link" className="ml-auto text-xs p-0 h-auto">All Requests</Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {supportRequests.map((req, i) => (
-                  <div key={i} className="flex items-center gap-3">
+                  <div key={i} className="flex items-center gap-2 sm:gap-3">
                     {req.avatar ? (
                       <Image src={req.avatar} alt={req.name} width={32} height={32} className="rounded-full" />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-xs">
                         {req.name.split(" ").map((n) => n[0]).join("")}
                       </div>
                     )}
-                    <div className="flex-1">
-                      <div className="font-medium">{req.name}</div>
-                      <div className="text-xs text-gray-400">{req.message}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm sm:text-base truncate">{req.name}</div>
+                      <div className="text-xs text-gray-400 truncate">{req.message}</div>
                     </div>
                     <div className="text-xs text-gray-400 whitespace-nowrap">{req.time}</div>
                   </div>
@@ -264,44 +271,45 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+        
         {/* Active Students & Traffic Sources */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
           {/* Active Students */}
-          <Card className="col-span-2">
+          <Card className="xl:col-span-2">
             <CardHeader>
-              <CardTitle>Active Students</CardTitle>
-              <CardDescription>How do your students visited in the time.</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Active Students</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">How do your students visited in the time.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-end gap-8 mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-8 mb-4">
                 <div>
-                  <div className="text-2xl font-bold">{(activeStudents.monthly.value/1000).toFixed(2)}K</div>
-                  <div className="text-sm flex items-center gap-1 text-green-500">
+                  <div className="text-xl sm:text-2xl font-bold">{(activeStudents.monthly.value/1000).toFixed(2)}K</div>
+                  <div className="text-xs sm:text-sm flex items-center gap-1 text-green-500">
                     <TrendingUp className="w-4 h-4" /> {activeStudents.monthly.change}%
                   </div>
                   <div className="text-xs text-gray-400 mt-1">Monthly</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">{(activeStudents.weekly.value/1000).toFixed(2)}K</div>
-                  <div className="text-sm flex items-center gap-1 text-red-500">
+                  <div className="text-xl sm:text-2xl font-bold">{(activeStudents.weekly.value/1000).toFixed(2)}K</div>
+                  <div className="text-xs sm:text-sm flex items-center gap-1 text-red-500">
                     <TrendingDown className="w-4 h-4" /> {activeStudents.weekly.change}%
                   </div>
                   <div className="text-xs text-gray-400 mt-1">Weekly</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">{(activeStudents.daily.value/1000).toFixed(2)}K</div>
-                  <div className="text-sm flex items-center gap-1 text-green-500">
+                  <div className="text-xl sm:text-2xl font-bold">{(activeStudents.daily.value/1000).toFixed(2)}K</div>
+                  <div className="text-xs sm:text-sm flex items-center gap-1 text-green-500">
                     <TrendingUp className="w-4 h-4" /> {activeStudents.daily.change}%
                   </div>
                   <div className="text-xs text-gray-400 mt-1">Daily (Avg)</div>
                 </div>
               </div>
               {/* Bar Chart */}
-              <div className="flex items-end h-24 gap-1">
+              <div className="flex items-end h-20 sm:h-24 gap-0.5 sm:gap-1 overflow-x-auto">
                 {activeStudents.chart.map((v, i) => (
                   <Tooltip key={i}>
                     <TooltipTrigger asChild>
-                      <div className="w-2 rounded bg-blue-200 hover:bg-blue-400 transition-all" style={{ height: `${v * 6}px` }} />
+                      <div className="w-1.5 sm:w-2 rounded bg-blue-200 hover:bg-blue-400 transition-all flex-shrink-0" style={{ height: `${v * 5}px` }} />
                     </TooltipTrigger>
                     <TooltipContent>{`Day ${i + 1}: ${v * 100} students`}</TooltipContent>
                   </Tooltip>
@@ -313,16 +321,17 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+          
           {/* Traffic Sources */}
           <Card>
             <CardHeader>
-              <CardTitle>Traffic Sources</CardTitle>
-              <CardDescription>30 Days</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Traffic Sources</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">30 Days</CardDescription>
             </CardHeader>
             <CardContent>
               {/* Pie Chart (simple ring) */}
-              <div className="flex items-center gap-4">
-                <div className="relative w-28 h-28">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28">
                   {/* Pie chart segments as colored rings */}
                   <svg viewBox="0 0 36 36" className="w-full h-full">
                     {(() => {
@@ -354,11 +363,11 @@ export default function DashboardPage() {
                     })()}
                   </svg>
                 </div>
-                <div className="flex-1 space-y-2">
+                <div className="flex-1 space-y-2 w-full">
                   {trafficSources.map((src) => (
                     <div key={src.name} className="flex items-center gap-2">
                       <span className={`w-3 h-3 rounded-full inline-block ${src.color}`} />
-                      <span className="text-xs text-gray-700 flex-1">{src.name}</span>
+                      <span className="text-xs text-gray-700 flex-1 truncate">{src.name}</span>
                       <span className="font-semibold text-xs">{src.value.toLocaleString()}</span>
                     </div>
                   ))}

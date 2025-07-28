@@ -4,7 +4,7 @@ import Link from "next/link";
 const categories = [
   {
     key: "/dashboard/track-list/track/subject-list/subject/exam",
-    name: "Chapter Management",
+    name: "Exam Management",
     subCount: 4,
     description: "Website Design & Develop the website with web applications ",
     color: "bg-violet-500",
@@ -18,8 +18,8 @@ const categories = [
     ],
   },
    {
-    key: "/dashboard/track-list/track/subject-list/subject/chapters",
-    name: " Content Mnagement",
+    key: "/dashboard/track-list/track/subject-list/subject/chapters/content",
+    name: " Content Management",
     subCount: 5,
     description: "Website Design & Develop the website with Design",
     color: "bg-yellow-400",

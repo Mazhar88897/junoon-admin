@@ -9,6 +9,15 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Check if user is already authenticated
+  useEffect(() => {
+    const token = sessionStorage.getItem('Authorization');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   // Carousel state for right side
   const carouselSlides = [
     {
@@ -52,6 +61,7 @@ export default function AuthPage() {
       });
 
       const data = await response.json();
+      console.log(data);
       setError(data.error);
      
       if (!response.ok) {
@@ -62,6 +72,9 @@ export default function AuthPage() {
       // Store token in session with proper Authorization format
       const authToken = `Token ${data.token}`;
       sessionStorage.setItem('Authorization', authToken);
+      sessionStorage.setItem('user_id', data.user.id);
+      sessionStorage.setItem('user_email', data.user.email);
+  
       
       // Log the token
       console.log('Auth Token:', authToken);
