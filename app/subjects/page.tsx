@@ -25,12 +25,15 @@ export default function SubjectsPage() {
   const [trackId, setTrackId] = useState<string | null>(null);
 
   useEffect(() => {
-    const id = sessionStorage.getItem('id_track');
-    if (id) {
-      setTrackId(id);
-    } else {
-      setError('Track ID not found in session storage.');
-      setLoading(false);
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      const id = sessionStorage.getItem('id_track');
+      if (id) {
+        setTrackId(id);
+      } else {
+        setError('Track ID not found in session storage.');
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -39,6 +42,11 @@ export default function SubjectsPage() {
       if (!trackId) return; // Don't fetch if trackId is not available
 
       try {
+        // Check if we're on the client side
+        if (typeof window === 'undefined') {
+          return;
+        }
+        
         const token = sessionStorage.getItem('Authorization');
         if (!token) {
           throw new Error('No authorization token found');
@@ -63,7 +71,10 @@ export default function SubjectsPage() {
       }
     };
 
-    fetchSubjects();
+    // Only fetch subjects on the client side
+    if (typeof window !== 'undefined') {
+      fetchSubjects();
+    }
   }, [trackId]); // Refetch when trackId changes
 
   if (error) {

@@ -140,7 +140,36 @@ function Topbar() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [userData, setUserData] = useState({
+    name: '',
+    email: '',
+    initial: ''
+  });
+
   useClickOutside(dropdownRef, () => setDropdownOpen(false));
+
+  // Load user data from sessionStorage on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userName = sessionStorage.getItem('user_name') || '';
+      const userEmail = sessionStorage.getItem('user_email') || '';
+      const initial = (userName || userEmail).charAt(0) || '';
+      
+      setUserData({
+        name: userName,
+        email: userEmail,
+        initial: initial
+      });
+    }
+  }, []);
+
+  const handleSignOut = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.clear();
+      router.push('/');
+    }
+  };
+
   return (
     <header className="fixed left-64 top-0 right-0 h-16 bg-transparent sm:bg-white border-0 sm:border-b border-slate-200 flex items-center justify-between px-8 z-20">
       <div className="flex items-center gap-4">
@@ -162,10 +191,10 @@ function Topbar() {
           >
             <div className="text-right mr-2">
               <div className="text-xs hidden sm:block text-slate-500">Administrator</div>
-              <div className="text-sm hidden sm:block font-medium text-slate-900">{sessionStorage.getItem('user_name')||sessionStorage.getItem('user_email')}</div>
+              <div className="text-sm hidden sm:block font-medium text-slate-900">{userData.name || userData.email}</div>
             </div>
             <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-blue-500 text-white text-lg font-semibold">{sessionStorage.getItem('user_name')?.charAt(0)||sessionStorage.getItem('user_email')?.charAt(0)}</AvatarFallback>
+              <AvatarFallback className="bg-blue-500 text-white text-lg font-semibold">{userData.initial}</AvatarFallback>
             </Avatar>
             <ChevronDown className="w-4 h-4 text-slate-400 ml-1" />
           </button>
@@ -173,11 +202,11 @@ function Topbar() {
             <div className="absolute right-0 mt-12 w-64 bg-white rounded-xl shadow-lg border border-slate-100 z-50 animate-fade-in">
               <div className="flex items-center gap-3 p-4 pt-20 border-b border-slate-100 bg-blue-50 rounded-t-xl">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-blue-500 text-white text-sm font-semibold">{sessionStorage.getItem('user_name')?.charAt(0)||sessionStorage.getItem('user_email')?.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="bg-blue-500 text-white text-sm font-semibold">{userData.initial}</AvatarFallback>
                 </Avatar>
                 <div>
                   {/* <div className="font-semibold text-slate-900">Abu Bin Ishtiyak</div> */}
-                  <div className="text-sm text-slate-500">{sessionStorage.getItem('user_email')}</div>
+                  <div className="text-sm text-slate-500">{userData.email}</div>
                 </div>
               </div>
               <div className="py-2">
@@ -187,10 +216,7 @@ function Topbar() {
                
               </div>
               <div className="border-t border-slate-100">
-                <button onClick={()=>{
-                  sessionStorage.clear();
-                  router.push('/');
-                }} className="flex items-center w-full gap-3 px-4 py-2 text-red-500 hover:bg-slate-100">
+                <button onClick={handleSignOut} className="flex items-center w-full gap-3 px-4 py-2 text-red-500 hover:bg-slate-100">
                   <LogOut className="w-5 h-5" /> Sign out
                 </button>
               </div>
@@ -267,14 +293,32 @@ function Sidebar() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check for authentication token on component mount
   useEffect(() => {
-    const token = sessionStorage.getItem('Authorization');
-    if (!token) {
-      router.push('/auth');
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      const token = sessionStorage.getItem('Authorization');
+      if (!token) {
+        router.push('/auth');
+      } else {
+        setIsLoading(false);
+      }
     }
   }, [router]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">

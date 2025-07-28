@@ -49,6 +49,11 @@ export default function ExamsPage() {
 
   const fetchTracks = async () => {
     try {
+      // Check if we're on the client side
+      if (typeof window === 'undefined') {
+        return;
+      }
+      
       const token = sessionStorage.getItem('Authorization');
       if (!token) {
         throw new Error('No authorization token found');
@@ -74,7 +79,10 @@ export default function ExamsPage() {
   };
 
   useEffect(() => {
-    fetchTracks();
+    // Only fetch tracks on the client side
+    if (typeof window !== 'undefined') {
+      fetchTracks();
+    }
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

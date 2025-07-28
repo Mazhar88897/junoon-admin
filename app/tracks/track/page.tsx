@@ -3,10 +3,13 @@ import React from "react";
 
 const Page = () => {
   const handleClick = () => {
-    const track_name = sessionStorage.getItem("track_name");
-    const id_track = sessionStorage.getItem("id_track");
-    console.log("track_name:", track_name);
-    console.log("id_track:", id_track);
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      const track_name = sessionStorage.getItem("track_name");
+      const id_track = sessionStorage.getItem("id_track");
+      console.log("track_name:", track_name);
+      console.log("id_track:", id_track);
+    }
   };
 
   return (

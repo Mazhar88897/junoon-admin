@@ -36,12 +36,15 @@ export default function ChaptersPage() {
   });
 
   useEffect(() => {
-    const id = sessionStorage.getItem('id_subject');
-    if (id) {
-      setSubjectId(id);
-    } else {
-      setError('Subject ID not found in session storage.');
-      setLoading(false);
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      const id = sessionStorage.getItem('id_subject');
+      if (id) {
+        setSubjectId(id);
+      } else {
+        setError('Subject ID not found in session storage.');
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -50,6 +53,11 @@ export default function ChaptersPage() {
       if (!subjectId) return;
 
       try {
+        // Check if we're on the client side
+        if (typeof window === 'undefined') {
+          return;
+        }
+        
         const token = sessionStorage.getItem('Authorization');
         if (!token) {
           throw new Error('No authorization token found');
@@ -75,7 +83,10 @@ export default function ChaptersPage() {
       }
     };
 
-    fetchChapters();
+    // Only fetch chapters on the client side
+    if (typeof window !== 'undefined') {
+      fetchChapters();
+    }
   }, [subjectId]);
 
   // Search filter (search by name, description)
@@ -92,11 +103,14 @@ export default function ChaptersPage() {
   const pagedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
 
   const handleChapterClick = (chapter: Chapter) => {
-    // Store chapter details in session storage for the next page
-    sessionStorage.setItem('chapter_id', chapter.id.toString());
-   
-    // Navigate to chapter detail page or perform other actions
-    router.push('/dashboard/track-list/track/subject-list/subject');
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      // Store chapter details in session storage for the next page
+      sessionStorage.setItem('chapter_id', chapter.id.toString());
+     
+      // Navigate to chapter detail page or perform other actions
+      router.push('/dashboard/track-list/track/subject-list/subject');
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +129,11 @@ export default function ChaptersPage() {
     setIsSubmitting(true);
 
     try {
+      // Check if we're on the client side
+      if (typeof window === 'undefined') {
+        throw new Error('Client-side only operation');
+      }
+
       const token = sessionStorage.getItem('Authorization');
       if (!token) {
         throw new Error('No authorization token found');

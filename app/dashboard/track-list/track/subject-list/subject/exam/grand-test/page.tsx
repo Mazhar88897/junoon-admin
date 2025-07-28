@@ -57,7 +57,17 @@ const Page = () => {
     graphics: null
   });
 
+  const [isClient, setIsClient] = useState(false);
+
+  // Set client flag on mount
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // Only run on client side
+    if (!isClient) return;
+    
     const subjectId = sessionStorage.getItem("id_subject");
     const subjectName = sessionStorage.getItem("subject_name");
     const subjectDescription = sessionStorage.getItem("subject_description");
@@ -75,7 +85,7 @@ const Page = () => {
       subject: subjectId || "",
       track: trackId || ""
     }));
-  }, []);
+  }, [isClient]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -133,6 +143,13 @@ const Page = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Only run on client side
+    if (!isClient) {
+      alert('Please wait for the page to load completely');
+      return;
+    }
+    
     const submitData = {
       title: formData.title,
       description: formData.description,
@@ -182,6 +199,11 @@ const Page = () => {
       alert('Error creating exam');
     }
   };
+
+  // Show loading while determining client-side
+  if (!isClient) {
+    return <div className="max-w-4xl mx-auto p-6">Loading...</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">

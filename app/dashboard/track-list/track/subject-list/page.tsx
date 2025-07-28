@@ -47,12 +47,15 @@ export default function SubjectsPage() {
   const pageSize = 10;
 
   useEffect(() => {
-    const id = sessionStorage.getItem('id_track');
-    if (id) {
-      setTrackId(id);
-    } else {
-      setError('Track ID not found in session storage.');
-      setLoading(false);
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      const id = sessionStorage.getItem('id_track');
+      if (id) {
+        setTrackId(id);
+      } else {
+        setError('Track ID not found in session storage.');
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -61,6 +64,11 @@ export default function SubjectsPage() {
       if (!trackId) return; // Don't fetch if trackId is not available
 
       try {
+        // Check if we're on the client side
+        if (typeof window === 'undefined') {
+          return;
+        }
+        
         const token = sessionStorage.getItem('Authorization');
         if (!token) {
           throw new Error('No authorization token found');
@@ -86,7 +94,10 @@ export default function SubjectsPage() {
       }
     };
 
-    fetchSubjects();
+    // Only fetch subjects on the client side
+    if (typeof window !== 'undefined') {
+      fetchSubjects();
+    }
   }, [trackId]); // Refetch when trackId changes
 
   // Search filter (search by name, description)
@@ -118,6 +129,10 @@ export default function SubjectsPage() {
     setIsSubmitting(true);
     setModalError('');
     try {
+      // Check if we're on the client side
+      if (typeof window === 'undefined') {
+        throw new Error('Client-side only function');
+      }
       const token = sessionStorage.getItem('Authorization');
       const track = sessionStorage.getItem('id_track');
       if (!token) throw new Error('No authorization token found');
@@ -161,6 +176,16 @@ export default function SubjectsPage() {
     setShowModal(false);
     setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
     setModalError('');
+  };
+
+  const handleRowClick = (row: Subject) => {
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('id_subject', row.id.toString());
+      sessionStorage.setItem('subject_name', row.name);
+      sessionStorage.setItem('subject_description', row.description);
+      router.push('/dashboard/track-list/track/subject-list/chapters-list');
+    }
   };
 
   if (error) {
@@ -213,12 +238,7 @@ export default function SubjectsPage() {
                 <tr
                   key={row.id}
                   className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
-                  onClick={() => {
-                    sessionStorage.setItem('id_subject', row.id.toString());
-                    sessionStorage.setItem('subject_name', row.name);
-                    sessionStorage.setItem('subject_description', row.description);
-                    router.push('/dashboard/track-list/track/subject-list/chapters-list');
-                  }}
+                  onClick={() => handleRowClick(row)}
                 >
                   <td className="p-3 font-semibold text-slate-800">{(page - 1) * pageSize + i + 1}</td>
                   <td className="p-3">

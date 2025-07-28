@@ -55,6 +55,11 @@ export default function ExamsPage() {
 
   const fetchTracks = async () => {
     try {
+      // Check if we're on the client side
+      if (typeof window === 'undefined') {
+        return;
+      }
+      
       const token = sessionStorage.getItem('Authorization');
       if (!token) {
         throw new Error('No authorization token found');
@@ -80,7 +85,10 @@ export default function ExamsPage() {
   };
 
   useEffect(() => {
-    fetchTracks();
+    // Only fetch tracks on the client side
+    if (typeof window !== 'undefined') {
+      fetchTracks();
+    }
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -116,6 +124,11 @@ export default function ExamsPage() {
     formData.append('created_by', newTrackData.created_by);
 
     try {
+      // Check if we're on the client side
+      if (typeof window === 'undefined') {
+        return;
+      }
+      
       const token = sessionStorage.getItem('Authorization');
       if (!token) {
         throw new Error('No authorization token found');
@@ -140,6 +153,15 @@ export default function ExamsPage() {
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+  const handleRowClick = (row: Track) => {
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('id_track', row.id.toString());
+      sessionStorage.setItem('has_university', row.has_university.toString());
+      router.push('/dashboard/track-list/track');
     }
   };
 
@@ -207,11 +229,7 @@ export default function ExamsPage() {
               <tr
                 key={row.id}
                 className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
-                onClick={() => {
-                  sessionStorage.setItem('id_track', row.id.toString());
-                  sessionStorage.setItem('has_university', row.has_university.toString());
-                  router.push('/dashboard/track-list/track');
-                }}
+                onClick={() => handleRowClick(row)}
               >
                 <td className="p-3 font-semibold text-slate-800">{(page - 1) * pageSize + i + 1}</td>
                 <td className="p-3">

@@ -25,6 +25,7 @@ export default function ChaptersPage() {
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const pageSize = 10;
 
   // Form state for adding new chapter
@@ -35,7 +36,15 @@ export default function ChaptersPage() {
     thumbnailPreview: ''
   });
 
+  // Set client flag on mount
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // Only run on client side
+    if (!isClient) return;
+    
     const id = sessionStorage.getItem('id_subject');
     if (id) {
       setSubjectId(id);
@@ -43,11 +52,11 @@ export default function ChaptersPage() {
       setError('Subject ID not found in session storage.');
       setLoading(false);
     }
-  }, []);
+  }, [isClient]);
 
   useEffect(() => {
     const fetchChapters = async () => {
-      if (!subjectId) return;
+      if (!subjectId || !isClient) return;
 
       try {
         const token = sessionStorage.getItem('Authorization');
@@ -76,7 +85,7 @@ export default function ChaptersPage() {
     };
 
     fetchChapters();
-  }, [subjectId]);
+  }, [subjectId, isClient]);
 
   // Search filter (search by name, description)
   const filteredData = useMemo(() => {
@@ -92,6 +101,9 @@ export default function ChaptersPage() {
   const pagedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
 
   const handleChapterClick = (chapter: Chapter) => {
+    // Only run on client side
+    if (!isClient) return;
+    
     // Store chapter details in session storage for the next page
     sessionStorage.setItem('chapter_id', chapter.id.toString());
    
@@ -115,6 +127,11 @@ export default function ChaptersPage() {
     setIsSubmitting(true);
 
     try {
+      // Only run on client side
+      if (!isClient) {
+        throw new Error('Client-side only functionality');
+      }
+
       const token = sessionStorage.getItem('Authorization');
       if (!token) {
         throw new Error('No authorization token found');
@@ -161,6 +178,11 @@ export default function ChaptersPage() {
     setShowModal(false);
     setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
   };
+
+  // Show loading while determining client-side
+  if (!isClient) {
+    return <div className="p-6">Loading...</div>;
+  }
 
   if (error) {
     return <div className="text-red-500 p-6">Error: {error}</div>;

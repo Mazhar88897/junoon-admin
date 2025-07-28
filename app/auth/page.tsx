@@ -12,9 +12,12 @@ export default function AuthPage() {
   
   // Check if user is already authenticated
   useEffect(() => {
-    const token = sessionStorage.getItem('Authorization');
-    if (token) {
-      router.push('/dashboard');
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      const token = sessionStorage.getItem('Authorization');
+      if (token) {
+        router.push('/dashboard');
+      }
     }
   }, [router]);
 
