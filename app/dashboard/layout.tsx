@@ -174,8 +174,8 @@ function Topbar() {
     <header className="fixed left-64 top-0 right-0 h-16 bg-transparent sm:bg-white border-0 sm:border-b border-slate-200 flex items-center justify-between px-8 z-20">
       <div className="flex items-center gap-4">
         <div className="flex hidden sm:block items-center gap-2">
-          <span className="text-blue-600 font-bold">Do you know the latest update of 2022?</span>
-          <span className="text-slate-500 text-sm">A overview of our is now available on You...</span>
+          <span className="text-blue-600 font-bold">Welcome to junoon admin panel</span>
+          <span className="text-slate-500 text-sm"></span>
         </div>
       </div>
       <div className="flex items-center gap-6">

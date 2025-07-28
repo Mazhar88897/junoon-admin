@@ -74,10 +74,10 @@ export default function LandingPage() {
                 <Link href="#contact" className="text-gray-700 hover:text-teal-600 transition-colors">
                   Contact
                 </Link>
-                <Link href="/login" className="text-teal-600 hover:text-teal-700 transition-colors">
+                <Link href="/auth" className="text-teal-600 hover:text-teal-700 transition-colors">
                   Login
                 </Link>
-                <Button className="bg-teal-600 hover:bg-teal-700 text-white w-fit">Sign Up</Button>
+                {/* <Button className="bg-teal-600 hover:bg-teal-700 text-white w-fit">Sign Up</Button> */}
               </nav>
             </div>
           )}
