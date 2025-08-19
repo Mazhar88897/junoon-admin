@@ -52,30 +52,30 @@ function SidebarMobile() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen w-64 bg-slate-900 text-white flex flex-col border-r border-slate-800 transition-transform duration-300 ease-in-out
+        className={`fixed top-0 left-0 z-40 h-screen w-64 bg-white text-slate-700 flex flex-col border-r border-slate-200 transition-transform duration-300 ease-in-out
         ${mobileOpen ? "translate-x-0" : "-translate-x-full"} sm:translate-x-0 sm:static sm:z-30`}
       >
         {/* Close button for mobile */}
         <div className="sm:hidden flex justify-end p-4">
-          <button onClick={() => setMobileOpen(false)} className="text-white">
+          <button onClick={() => setMobileOpen(false)} className="text-slate-600">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="flex items-center w-full justify-center text-center gap-2 h-16 px-6 border-b border-slate-800">
+        <div className="flex items-center w-full justify-center text-center gap-2 h-16 px-6 border-b border-slate-200">
           <Image src="/Union.svg" alt="Logo" width={60} height={60} className="h-20 w-20" />
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-2">
-          <div className="text-xs font-semibold uppercase text-slate-400 px-4 mb-2">Dashboard & Panels</div>
+          <div className="text-xs font-semibold uppercase text-slate-500 px-4 mb-2">Dashboard & Panels</div>
           <ul className="space-y-1">
             {sidebarItems.map((item, idx) => (
               <li key={item.label}>
                 {item.children ? (
                   <>
                     <button
-                      className={`flex items-center gap-3 px-4 py-2 rounded w-full hover:bg-slate-800 transition ${
-                        openIndex === idx ? "bg-slate-800" : ""
+                      className={`flex items-center gap-3 px-4 py-2 rounded w-full hover:bg-slate-100 transition ${
+                        openIndex === idx ? "bg-slate-100" : ""
                       }`}
                       onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
                       aria-expanded={openIndex === idx}
@@ -83,7 +83,7 @@ function SidebarMobile() {
                       {item.icon}
                       <span className="font-medium text-sm flex-1 truncate text-left">{item.label}</span>
                       <ChevronDown
-                        className={`w-4 h-4 text-slate-400 transition-transform ${
+                        className={`w-4 h-4 text-slate-500 transition-transform ${
                           openIndex === idx ? "rotate-180" : ""
                         }`}
                       />
@@ -94,7 +94,7 @@ function SidebarMobile() {
                           <li key={child.label}>
                             <Link
                               href={child.href}
-                              className="block text-slate-300 text-sm px-2 py-1 rounded hover:bg-slate-800 cursor-pointer truncate"
+                              className="block text-slate-600 text-sm px-2 py-1 rounded hover:bg-slate-100 cursor-pointer truncate"
                               onClick={() => setMobileOpen(false)}
                             >
                               {child.label}
@@ -107,12 +107,12 @@ function SidebarMobile() {
                 ) : item.href ? (
                   <Link
                     href={item.href}
-                    className="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 transition font-medium text-sm"
+                    className="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-100 transition font-medium text-sm"
                     onClick={() => setMobileOpen(false)}
                   >
                     {item.icon}
                     <span className="flex-1 truncate text-left">{item.label}</span>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <ChevronRight className="w-4 h-4 text-slate-500" />
                   </Link>
                 ) : null}
               </li>
@@ -341,31 +341,31 @@ function Topbar() {
 function SidebarDesktop() {
   const [openIndex, setOpenIndex] = useState<number | null>(0); // Dashboards open by default
   return (
-    <aside className="fixed left-0 top-0 z-30 h-screen w-64 bg-slate-900 text-white flex flex-col border-r border-slate-800">
-      <div className="flex items-center w-full justify-center text-center gap-2 h-16 px-6 border-b border-slate-800">
+    <aside className="fixed left-0 top-0 z-30 h-screen w-64 bg-white text-slate-700 flex flex-col border-r border-slate-200">
+      <div className="flex items-center w-full justify-center text-center gap-2 h-16 px-6 border-b border-slate-200">
         <Image src="/Union.svg" alt="Logo" width={60} height={60} className="h-20 w-20" />
       </div>
       <nav className="flex-1 overflow-y-auto py-4 px-2">
-        <div className="text-xs font-semibold uppercase text-slate-400 px-4 mb-2">Dashboard & Panels</div>
+        <div className="text-xs font-semibold uppercase text-slate-500 px-4 mb-2">Dashboard & Panels</div>
         <ul className="space-y-1">
           {sidebarItems.map((item, idx) => (
             <li key={item.label}>
               {item.children ? (
                 <>
                   <button
-                    className={`flex items-center gap-3 px-4 py-2 rounded w-full hover:bg-slate-800 transition ${openIndex === idx ? "bg-slate-800" : ""}`}
+                    className={`flex items-center gap-3 px-4 py-2 rounded w-full hover:bg-slate-100 transition ${openIndex === idx ? "bg-slate-100" : ""}`}
                     onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
                     aria-expanded={openIndex === idx}
                   >
                     {item.icon}
                     <span className="font-medium text-sm flex-1 truncate text-left">{item.label}</span>
-                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${openIndex === idx ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openIndex === idx ? "rotate-180" : ""}`} />
                   </button>
                   {openIndex === idx && (
                     <ul className="pl-8 py-1 space-y-1">
                       {item.children.map((child) => (
                         <li key={child.label}>
-                          <Link href={child.href} className="block text-slate-300 text-sm px-2 py-1 rounded hover:bg-slate-800 cursor-pointer truncate">
+                          <Link href={child.href} className="block text-slate-600 text-sm px-2 py-1 rounded hover:bg-slate-100 cursor-pointer truncate">
                             {child.label}
                           </Link>
                         </li>
@@ -374,10 +374,10 @@ function SidebarDesktop() {
                   )}
                 </>
               ) : item.href ? (
-                <Link href={item.href} className="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 transition font-medium text-sm">
+                <Link href={item.href} className="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-100 transition font-medium text-sm">
                   {item.icon}
                   <span className="flex-1 truncate text-left">{item.label}</span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <ChevronRight className="w-4 h-4 text-slate-500" />
                 </Link>
               ) : null}
             </li>
@@ -420,7 +420,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
@@ -430,7 +430,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <Topbar />
       <main className="p-2 sm:pl-64  pt-16  min-h-screen">
