@@ -995,7 +995,7 @@ export default function NotesPage() {
             </div>
             <div className="px-6 py-4">
               <p className="text-gray-700 mb-4">
-                Are you sure you want to delete the note "<strong>{selectedNote.name}</strong>"? This action cannot be undone.
+                Are you sure you want to delete the note <strong>{selectedNote.name}</strong>? This action cannot be undone.
               </p>
               <div className="flex justify-end gap-3">
                 <button
