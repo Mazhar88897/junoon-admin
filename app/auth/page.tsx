@@ -146,7 +146,7 @@ export default function AuthPage() {
             )}
             <div className='mt-20'><button
               type="submit"
-              className="w-full py-2 bg-[#1A4D2E] hover:bg-[#5a6edc] text-white rounded-md font-medium mt-2"
+              className="w-full py-2 bg-[#1A4D2E] hover:bg-[#1A4D2E] text-white rounded-md font-medium mt-2"
             >
               Sign in
             </button></div>

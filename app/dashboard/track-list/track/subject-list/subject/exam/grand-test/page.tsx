@@ -308,7 +308,7 @@ const Page = () => {
                 <button
                   type="button"
                   onClick={addChoice}
-                  className="px-4 py-2 bg-blue-500 text-white rounded"
+                  className="px-4 py-2 bg-[#1A4D2E] text-white rounded"
                 >
                   Add Choice
                 </button>
@@ -380,7 +380,7 @@ const Page = () => {
 
         <button
           type="submit"
-          className="w-full px-4 py-2 bg-blue-500 text-white rounded"
+          className="w-full px-4 py-2 bg-[#1A4D2E] text-white rounded"
         >
           Create Exam
         </button>
@@ -467,7 +467,7 @@ export default Page;
 //   };
 
 //   return (
-//     <button onClick={handleClick} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+//     <button onClick={handleClick} className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md hover:bg-blue-700">
 //       Create Exam
 //     </button>
 //   );

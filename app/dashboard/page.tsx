@@ -17,7 +17,7 @@ const studentsEnrollment = {
 
 const topCategories = [
   { name: "Web Development", color: "bg-orange-500", light: "bg-orange-100", value: 40, rest: 60, info: "Most popular, 1200 sales" },
-  { name: "Mobile Application", color: "bg-blue-500", light: "bg-blue-100", value: 35, rest: 65, info: "800 sales" },
+  { name: "Mobile Application", color: "bg-[#1A4D2E]", light: "bg-blue-100", value: 35, rest: 65, info: "800 sales" },
   { name: "Graphics Design", color: "bg-green-400", light: "bg-green-100", value: 50, rest: 50, info: "950 sales" },
   { name: "Database", color: "bg-indigo-700", light: "bg-indigo-200", value: 70, rest: 30, info: "1500 sales" },
   { name: "Marketing", color: "bg-teal-400", light: "bg-teal-100", value: 35, rest: 65, info: "700 sales" },
@@ -61,7 +61,7 @@ const activeStudents = {
 const trafficSources = [
   { name: "Organic Search", value: 4305, color: "bg-blue-400" },
   { name: "Referrals", value: 482, color: "bg-pink-300" },
-  { name: "Social Media", value: 859, color: "bg-purple-300" },
+  { name: "Social Media", value: 859, color: "bg-[#1A4D2E]" },
   { name: "Others", value: 138, color: "bg-yellow-300" },
 ];
 
@@ -110,7 +110,7 @@ export default function DashboardPage() {
                     <Tooltip key={i}>
                       <TooltipTrigger asChild>
                         <div
-                          className={`w-3 sm:w-4 rounded-t ${i === arr.length - 1 ? 'bg-blue-500' : 'bg-blue-200'} transition-all`}
+                          className={`w-3 sm:w-4 rounded-t ${i === arr.length - 1 ? 'bg-[#1A4D2E]' : 'bg-blue-200'} transition-all`}
                           style={{ height: `${v * 15}px` }}
                         />
                       </TooltipTrigger>

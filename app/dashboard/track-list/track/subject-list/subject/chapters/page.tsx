@@ -212,7 +212,7 @@ export default function ChaptersPage() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-purple-800  px-4 py-2 text-sm font-bold text-white rounded-lg">
+          className="bg-[#1A4D2E]  px-4 py-2 text-sm font-bold text-white rounded-lg">
           + Add New Chapter
         </button>
       </div>
@@ -290,7 +290,7 @@ export default function ChaptersPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="relative w-full max-w-md mx-auto bg-white rounded-lg shadow-2xl p-0">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-purple-800 rounded-t-lg">
+            <div className="flex items-center justify-between px-6 py-4 bg-[#1A4D2E] rounded-t-lg">
               <h3 className="text-lg font-semibold text-white">Create New Chapter</h3>
               <button
                 onClick={closeModal}
@@ -365,7 +365,7 @@ export default function ChaptersPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-4 py-2 bg-purple-800 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md hover:bg-[#1A4D2E] disabled:opacity-50 transition-colors"
                   >
                     {isSubmitting ? 'Creating...' : 'Create Chapter'}
                   </button>

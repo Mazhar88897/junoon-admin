@@ -5,6 +5,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
+import { Button } from '@/components/ui/button';
+import { Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -36,6 +39,10 @@ export default function SubjectsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
   const [formData, setFormData] = useState({
@@ -44,6 +51,7 @@ export default function SubjectsPage() {
     thumbnail: null as File | null,
     thumbnailPreview: '',
   });
+  const [isDragOver, setIsDragOver] = useState(false);
   const pageSize = 10;
 
   useEffect(() => {
@@ -124,6 +132,50 @@ export default function SubjectsPage() {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        setFormData(prev => ({
+          ...prev,
+          thumbnail: file,
+          thumbnailPreview: URL.createObjectURL(file)
+        }));
+      }
+    }
+  };
+
+  const handleBrowseClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        const file = target.files[0];
+        setFormData(prev => ({
+          ...prev,
+          thumbnail: file,
+          thumbnailPreview: URL.createObjectURL(file)
+        }));
+      }
+    };
+    input.click();
+  };
+
   const handleAddSubject = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -153,6 +205,7 @@ export default function SubjectsPage() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create subject');
       }
+      toast.success('Subject created successfully');
       setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
       setShowModal(false);
       // Refresh subjects
@@ -176,6 +229,124 @@ export default function SubjectsPage() {
     setShowModal(false);
     setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
     setModalError('');
+    setIsDragOver(false);
+  };
+
+  const handleEditSubject = (subject: Subject) => {
+    setEditingSubject(subject);
+    setFormData({
+      name: subject.name,
+      description: subject.description,
+      thumbnail: null,
+      thumbnailPreview: subject.thumbnail || '',
+    });
+    setIsEditModalOpen(true);
+    setIsDragOver(false);
+  };
+
+  const handleUpdateSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setModalError('');
+
+    if (!formData.name) {
+      setModalError('Subject name is mandatory.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!editingSubject) return;
+
+    try {
+      const token = sessionStorage.getItem('Authorization');
+      if (!token) {
+        throw new Error('No authorization token found');
+      }
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('track', trackId || '');
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('description', formData.description);
+      if (formData.thumbnail) {
+        formDataToSend.append('thumbnail', formData.thumbnail);
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/subjects/${editingSubject.id}/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token,
+        },
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update subject');
+      }
+      toast.success('Subject updated successfully');
+      setIsEditModalOpen(false);
+      setEditingSubject(null);
+      setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
+      
+      // Refresh subjects list
+      setLoading(true);
+      const refreshed = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/subjects/?track_id=${trackId}`, {
+        headers: { 'Authorization': token },
+      });
+      if (refreshed.ok) {
+        const data = await refreshed.json();
+        setSubjects(data);
+      }
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : 'Failed to update subject');
+    } finally {
+      setIsSubmitting(false);
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (subject: Subject) => {
+    setSubjectToDelete(subject);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteSubject = async () => {
+    if (!subjectToDelete) return;
+
+    try {
+      const token = sessionStorage.getItem('Authorization');
+      if (!token) {
+        throw new Error('No authorization token found');
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/subjects/${subjectToDelete.id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete subject');
+      }
+      toast.success('Subject deleted successfully');
+      // Refresh the subjects list
+      setLoading(true);
+      const refreshed = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/subjects/?track_id=${trackId}`, {
+        headers: { 'Authorization': token },
+      });
+      if (refreshed.ok) {
+        const data = await refreshed.json();
+        setSubjects(data);
+      }
+      
+      setIsDeleteModalOpen(false);
+      setSubjectToDelete(null);
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : 'Failed to delete subject');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRowClick = (row: Subject) => {
@@ -184,7 +355,7 @@ export default function SubjectsPage() {
       sessionStorage.setItem('id_subject', row.id.toString());
       sessionStorage.setItem('subject_name', row.name);
       sessionStorage.setItem('subject_description', row.description);
-      router.push('/dashboard/track-list/track/subject-list/chapters-list');
+      router.push('/dashboard/track-list/track/subject-list/subject-cards');
     }
   };
 
@@ -206,7 +377,7 @@ export default function SubjectsPage() {
         <span>Subjects</span>
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 text-sm bg-purple-800 text-white rounded-lg font-bold hover:bg-purple-700 transition-colors"
+          className="px-4 py-2 text-sm bg-[#1A4D2E] text-white rounded-sm font-bold hover:bg-[#1A4D2E] transition-colors"
         >
           + Add New Subject
         </button>
@@ -225,7 +396,7 @@ export default function SubjectsPage() {
           <table className="min-w-full border-grey-800 border-2 text-sm">
             <thead>
               <tr>
-                <th className="p-3">#</th>
+                <th className="pl-3">#</th>
                 <th className="p-3 text-left">Thumbnail</th>
                 <th className="p-3 text-left">Name</th>
                 <th className="p-3 text-left">Description</th>
@@ -237,13 +408,13 @@ export default function SubjectsPage() {
               {pagedData.map((row, i) => (
                 <tr
                   key={row.id}
-                  className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
+                  className="border-t border-grey-800  border-2 hover:bg-blue-50 cursor-pointer transition"
                   onClick={() => handleRowClick(row)}
                 >
-                  <td className="p-3 font-semibold text-slate-800">{(page - 1) * pageSize + i + 1}</td>
+                  <td className=" font-semibold text-slate-800"> <p className='pl-8'>  {(page - 1) * pageSize + i + 1}</p></td>
                   <td className="p-3">
                     {row.thumbnail ? (
-                      <img src={row.thumbnail} alt={row.name} className="w-8 h-8 object-cover rounded" />
+                      <img src={row.thumbnail} alt={row.name} className="w-10 h-10 object-cover rounded" />
                     ) : (
                       <div className="w-8 h-8 bg-gray-100 flex items-center text-xs justify-center rounded text-gray-400">Null</div>
                     )}
@@ -259,9 +430,30 @@ export default function SubjectsPage() {
                   </td>
                   <td className="p-3">{row.chapters.length}</td>
                   <td className="p-3 text-right">
-                    <button className="px-2 py-1 text-gray-400 hover:text-gray-700" tabIndex={-1} onClick={e => e.stopPropagation()}>
-                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/><circle cx="5" cy="12" r="2" fill="currentColor"/></svg>
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditSubject(row);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(row);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -303,7 +495,7 @@ export default function SubjectsPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="relative w-full max-w-2xl mx-auto bg-white rounded-lg shadow-2xl p-0 max-h-[70vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-8 py-2 bg-purple-800 rounded-t-lg">
+            <div className="flex items-center justify-between px-8 py-2 bg-[#1A4D2E] rounded-t-lg">
               <h3 className="text-lg font-semibold text-white">Add New Subject</h3>
               <button
                 onClick={closeModal}
@@ -339,22 +531,51 @@ export default function SubjectsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Thumbnail</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-                {formData.thumbnailPreview && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                    <img
-                      src={formData.thumbnailPreview}
-                      alt="Thumbnail preview"
-                      className="w-24 h-24 object-cover rounded border"
-                    />
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                    isDragOver 
+                      ? 'border-blue-400 bg-blue-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className="space-y-4">
+                    <div className="flex flex-col items-center space-y-2">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <div className="text-sm text-gray-600">
+                        <span className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer" onClick={handleBrowseClick}>
+                          Click to browse
+                        </span>
+                        {' '}or drag and drop
+                      </div>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                    
+                    {formData.thumbnailPreview && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-600 mb-2">Preview:</p>
+                        <div className="relative inline-block">
+                          <img
+                            src={formData.thumbnailPreview}
+                            alt="Thumbnail preview"
+                            className="w-24 h-24 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, thumbnail: null, thumbnailPreview: '' }))}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
               {modalError && (
                 <div className="text-red-500 text-sm mt-2 text-center">{modalError}</div>
@@ -370,12 +591,200 @@ export default function SubjectsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-purple-800 text-white rounded-md font-medium hover:bg-[#5a6edc] focus:outline-none disabled:opacity-50"
+                  className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md font-medium hover:bg-[#1A4D2E] focus:outline-none disabled:opacity-50"
                 >
                   {isSubmitting ? 'Creating...' : 'Create Subject'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Subject Modal */}
+      {isEditModalOpen && editingSubject && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="relative w-full max-w-2xl mx-auto bg-white rounded-lg shadow-2xl p-0 max-h-[70vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-8 py-2 bg-[#1A4D2E] rounded-t-lg">
+              <h3 className="text-lg font-semibold text-white">Edit Subject</h3>
+              <button
+                onClick={() => { 
+                  setIsEditModalOpen(false); 
+                  setEditingSubject(null); 
+                  setModalError(''); 
+                  setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
+                  setIsDragOver(false);
+                }}
+                className="text-white hover:text-gray-200 text-2xl font-bold focus:outline-none"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleUpdateSubject} className="px-8 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name<span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-600 focus:border-blue-600"
+                  placeholder="Enter subject name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <div className="bg-white rounded border border-gray-300">
+                  <ReactQuill
+                    value={formData.description}
+                    onChange={(val: string) => setFormData(prev => ({ ...prev, description: val }))}
+                    theme="snow"
+                    className="min-h-[120px]"
+                    placeholder="Enter subject description..."
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Thumbnail</label>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                    isDragOver 
+                      ? 'border-blue-400 bg-blue-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className="space-y-4">
+                    <div className="flex flex-col items-center space-y-2">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <div className="text-sm text-gray-600">
+                        <span className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer" onClick={handleBrowseClick}>
+                          Click to browse
+                        </span>
+                        {' '}or drag and drop
+                      </div>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                    
+                 
+                  </div>
+                </div>
+              </div>
+                 {formData.thumbnailPreview && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-600 mb-2">Preview:</p>
+                        <div className="relative inline-block">
+                          <img
+                            src={formData.thumbnailPreview}
+                            alt="Thumbnail preview"
+                            className="w-24 h-24 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, thumbnail: null, thumbnailPreview: '' }))}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    )}
+              {modalError && (
+                <div className="text-red-500 text-sm mt-2 text-center">{modalError}</div>
+              )}
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => { 
+                    setIsEditModalOpen(false); 
+                    setEditingSubject(null); 
+                    setModalError(''); 
+                    setFormData({ name: '', description: '', thumbnail: null, thumbnailPreview: '' });
+                    setIsDragOver(false);
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 focus:outline-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Updating...' : 'Update Subject'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && subjectToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="relative w-full max-w-md mx-auto bg-white rounded-lg shadow-2xl p-0">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 bg-red-600 rounded-t-lg">
+              <h3 className="text-lg font-semibold text-white">Delete Subject</h3>
+              <button
+                onClick={() => { 
+                  setIsDeleteModalOpen(false); 
+                  setSubjectToDelete(null); 
+                }}
+                className="text-white hover:text-gray-200 text-2xl font-bold focus:outline-none"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            {/* Content */}
+            <div className="px-6 py-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-gray-900">Are you sure?</h3>
+                  <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Subject:</span> {subjectToDelete.name}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  This will permanently delete the subject and all associated data.
+                </p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => { 
+                    setIsDeleteModalOpen(false); 
+                    setSubjectToDelete(null); 
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 focus:outline-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteSubject}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 focus:outline-none"
+                >
+                  Delete Subject
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -126,9 +126,11 @@ export default function ChaptersPage() {
     if (typeof window !== 'undefined') {
       // Store chapter details in session storage for the next page
       sessionStorage.setItem('chapter_id', chapter.id.toString());
+      sessionStorage.setItem('chapter_name', chapter.name);
+      sessionStorage.setItem('chapter_description', chapter.description || '');
      
       // Navigate to chapter detail page or perform other actions
-      router.push('/dashboard/track-list/track/subject-list/subject');
+      router.push('/dashboard/track-list/track/subject-list/subject-cards/chapters/content');
     }
   };
 
