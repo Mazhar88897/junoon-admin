@@ -25,19 +25,19 @@ export default function AuthPage() {
   const carouselSlides = [
     {
       img: '/auth.png',
-      title: 'Dashlite',
-      desc: 'You can start to create your products easily with its user-friendly design & most completed responsive layout.'
+      title: 'Junoon LMS',
+      desc: 'You can manage your LMS with Junoon LMS with its user-friendly design & most completed responsive layout.'
     },
     {
       img: '/auth.png',
-      title: 'Analytics',
-      desc: 'Track your analytics and performance with real-time dashboards and beautiful charts.'
+      title: 'Courses',
+      desc: 'You can manage your courses easily with its user-friendly design & most completed responsive layout.'
     },
     {
       img: '/auth.png',
-      title: 'Secure Access',
-      desc: 'Your data is protected with industry-leading security and privacy features.'
-    }
+      title: 'Exams and Notes Management',
+      desc: 'You can manage your exams and notes easily with its user-friendly design & most completed responsive layout.'
+    },
   ];
   const [carouselIdx, setCarouselIdx] = useState(0);
   useEffect(() => {
@@ -98,13 +98,13 @@ export default function AuthPage() {
             <Image src="/Union.svg" alt="Logo" width={150} height={150} className="mr-2" />
                  </div>
           <h2 className="text-2xl font-bold mb-2">Sign-In</h2>
-          <p className="text-sm font-semibold text-gray-400 mb-6">Access the DashLite panel using your email and passcode.</p>
+          <p className="text-sm font-semibold text-gray-400 mb-6">Access the Junoon LMS panel using your email and passcode.</p>
           <form className="space-y-4 mt-6" onSubmit={handleSubmit}>
             <div>
-              <div className="flex justify-between items-center mb-1">
+              {/* <div className="flex justify-between items-center mb-1">
                 <label htmlFor="email" className="text-sm font-medium text-gray-700">Email or Username</label>
                 <a href="#" className="text-xs text-[#1A4D2E] hover:underline">Need Help?</a>
-              </div>
+              </div> */}
               <input
                 id="email"
                 name="email"
@@ -117,10 +117,10 @@ export default function AuthPage() {
               />
             </div>
             <div>
-              <div className="flex justify-between items-center mb-1">
+              {/* <div className="flex justify-between items-center mb-1">
                 <label htmlFor="password" className="text-sm font-medium text-gray-700">Passcode</label>
                 <a href="#" className="text-xs text-[#1A4D2E] hover:underline">Forgot Code?</a>
-              </div>
+              </div> */}
               <div className="relative">
                 <input
                   id="password"
@@ -152,10 +152,10 @@ export default function AuthPage() {
             </button></div>
             
           </form>
-          <div className="text-xs text-gray-500 mt-4 text-center">
+          {/* <div className="text-xs text-gray-500 mt-4 text-center">
             New on our platform? <a href="#" className="text-[#1A4D2E] hover:underline">Create an account</a>
-          </div>
-          <div className="flex items-center my-4">
+          </div> */}
+          {/* <div className="flex items-center my-4">
             <div className="flex-grow h-px bg-gray-200" />
             <span className="mx-2 text-xs text-gray-400">OR</span>
             <div className="flex-grow h-px bg-gray-200" />
@@ -166,15 +166,15 @@ export default function AuthPage() {
           </div>
           <div className="text-xs text-gray-500 text-center">
             I don&apos;t have an account? <a href="#" className="text-[#1A4D2E] hover:underline">Try 15 days free</a>
-          </div>
+          </div> */}
         </div>
-        <div className="mt-8 text-xs text-gray-400 text-center space-x-4">
+        {/* <div className="mt-8 text-xs text-gray-400 text-center space-x-4">
           <a href="#" className="hover:underline">Terms & Condition</a>
           <a href="#" className="hover:underline">Privacy Policy</a>
           <a href="#" className="hover:underline">Help</a>
           <span>English </span>
           <div className="mt-2">© 2024 DashLite. All Rights Reserved.</div>
-        </div>
+        </div> */}
       </div>
       {/* Right Side: Illustration and Description */}
       <div className="flex-1 hidden w-full sm:block flex flex-col items-center justify-center px-8 py-10">

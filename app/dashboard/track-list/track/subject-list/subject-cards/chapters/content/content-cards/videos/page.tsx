@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Upload, X, Play, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -31,6 +31,183 @@ interface Chapter {
   name: string;
 }
 
+// Drag and Drop Component
+const DragDropZone = ({ 
+  onFileDrop, 
+  accept, 
+  preview, 
+  onRemove, 
+  label, 
+  required = false,
+  icon: Icon,
+  fileType = 'file'
+}: {
+  onFileDrop: (file: File) => void;
+  accept: string;
+  preview: string | null;
+  onRemove: () => void;
+  label: string;
+  required?: boolean;
+  icon: React.ComponentType<{ className?: string }>;
+  fileType?: 'image' | 'video' | 'file';
+}) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dragCounter, setDragCounter] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragCounter(prev => prev + 1);
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragCounter(prev => prev - 1);
+    if (dragCounter === 1) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    setDragCounter(0);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const file = files[0];
+      
+      // Validate file type
+      if (file.type.startsWith(accept.split('/')[0]) || file.type.includes(accept.split('/')[1])) {
+        // Validate file size (100MB for videos, 10MB for images)
+        const maxSize = fileType === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+          const maxSizeMB = maxSize / (1024 * 1024);
+          toast.error(`File too large. Maximum size is ${maxSizeMB}MB.`);
+          return;
+        }
+        
+        setIsUploading(true);
+        try {
+          onFileDrop(file);
+          toast.success(`${fileType.charAt(0).toUpperCase() + fileType.slice(1)} uploaded successfully!`);
+        } finally {
+          setIsUploading(false);
+        }
+      } else {
+        toast.error(`Invalid file type. Please select a ${fileType} file.`);
+      }
+    }
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (100MB for videos, 10MB for images)
+      const maxSize = fileType === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        const maxSizeMB = maxSize / (1024 * 1024);
+        toast.error(`File too large. Maximum size is ${maxSizeMB}MB.`);
+        return;
+      }
+      
+      setIsUploading(true);
+      try {
+        onFileDrop(file);
+        toast.success(`${fileType.charAt(0).toUpperCase() + fileType.slice(1)} uploaded successfully!`);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="w-full">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}{required && <span className="text-red-500">*</span>}
+      </label>
+      
+      <div
+        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
+          isDragOver 
+            ? 'border-blue-500 bg-blue-50' 
+            : isUploading
+              ? 'border-yellow-500 bg-yellow-50'
+              : preview 
+                ? 'border-green-300 bg-green-50' 
+                : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+        }`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {preview ? (
+          <div className="relative">
+            {fileType === 'image' && (
+              <img 
+                src={preview} 
+                alt="Preview" 
+                className="w-full h-32 object-cover rounded-lg mx-auto"
+              />
+            )}
+            {fileType === 'video' && (
+              <div className="relative w-full h-32 bg-gray-900 rounded-lg mx-auto flex items-center justify-center">
+                <video 
+                  src={preview} 
+                  className="w-full h-full object-cover rounded-lg"
+                  muted
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-lg flex items-center justify-center">
+                  <Play className="h-8 w-8 text-white" />
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onRemove}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <>
+            {isUploading ? (
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
+            ) : (
+              <Icon className={`mx-auto h-12 w-12 text-gray-400 ${isDragOver ? 'text-blue-500' : ''}`} />
+            )}
+            <div className="mt-2">
+              <p className={`text-sm ${isDragOver ? 'text-blue-600' : isUploading ? 'text-yellow-600' : 'text-gray-600'}`}>
+                {isUploading ? 'Uploading...' : isDragOver ? 'Drop your file here' : `Drag and drop your ${fileType} here, or click to browse`}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {isUploading ? 'Please wait...' : `Supports: ${accept}`}
+              </p>
+            </div>
+            <input
+              type="file"
+              accept={accept}
+              onChange={handleFileInput}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function RecordedLecturesPage() {
   const router = useRouter();
   const [videos, setVideos] = useState<Video[]>([]);
@@ -38,7 +215,9 @@ export default function RecordedLecturesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [subjectId, setSubjectId] = useState<string | null>(null);
-  const [search, setSearch] = useState('');  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');  
+  const [page, setPage] = useState(1);
+
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPlayerModal, setShowPlayerModal] = useState(false);
@@ -183,13 +362,34 @@ export default function RecordedLecturesPage() {
     };
   }, []);
 
-  // Search filter (search by name, description)
+  // Search filter and sorting (search by name, description, sort by modified_on in descending order)
   const filteredData = useMemo(() => {
-    if (!search) return videos;
-    return videos.filter(row =>
-      row.name.toLowerCase().includes(search.toLowerCase()) ||
-      row.description.toLowerCase().includes(search.toLowerCase())
-    );
+    let filtered = videos;
+    
+    // Apply search filter
+    if (search) {
+      filtered = videos.filter(row =>
+        row.name.toLowerCase().includes(search.toLowerCase()) ||
+        row.description.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    // Sort by modified_on in descending order (newest to oldest)
+    filtered = [...filtered].sort((a, b) => {
+      // Use modified_on if available, otherwise fall back to created_on
+      const dateA = a.modified_on ? new Date(a.modified_on) : new Date(a.created_on);
+      const dateB = b.modified_on ? new Date(b.modified_on) : new Date(b.created_on);
+      
+      // Ensure we have valid dates
+      if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+        return 0; // Keep original order if dates are invalid
+      }
+      
+      // Always sort by latest first (descending order)
+      return dateB.getTime() - dateA.getTime(); // Newest first
+    });
+    
+    return filtered;
   }, [search, videos]);
 
   // Pagination
@@ -299,9 +499,75 @@ export default function RecordedLecturesPage() {
       setFormData(prev => ({
         ...prev,
         [name]: file,
-        [`${name}Preview`]: name === 'thumbnail' ? URL.createObjectURL(file) : '',
+        [`${name}Preview`]: name === 'thumbnail' ? URL.createObjectURL(file) : name === 'video' ? URL.createObjectURL(file) : '',
       }));
     }
+  };
+
+  // Drag and drop handlers for form
+  const handleVideoDrop = (file: File) => {
+    setFormData(prev => ({
+      ...prev,
+      video: file,
+      videoPreview: URL.createObjectURL(file),
+    }));
+  };
+
+  const handleThumbnailDrop = (file: File) => {
+    setFormData(prev => ({
+      ...prev,
+      thumbnail: file,
+      thumbnailPreview: URL.createObjectURL(file),
+    }));
+  };
+
+  const handleVideoRemove = () => {
+    setFormData(prev => ({
+      ...prev,
+      video: null,
+      videoPreview: '',
+    }));
+  };
+
+  const handleThumbnailRemove = () => {
+    setFormData(prev => ({
+      ...prev,
+      thumbnail: null,
+      thumbnailPreview: '',
+    }));
+  };
+
+  // Drag and drop handlers for edit form
+  const handleEditVideoDrop = (file: File) => {
+    setEditFormData(prev => ({
+      ...prev,
+      video: file,
+      videoPreview: URL.createObjectURL(file),
+    }));
+  };
+
+  const handleEditThumbnailDrop = (file: File) => {
+    setEditFormData(prev => ({
+      ...prev,
+      thumbnail: file,
+      thumbnailPreview: URL.createObjectURL(file),
+    }));
+  };
+
+  const handleEditVideoRemove = () => {
+    setEditFormData(prev => ({
+      ...prev,
+      video: null,
+      videoPreview: '',
+    }));
+  };
+
+  const handleEditThumbnailRemove = () => {
+    setEditFormData(prev => ({
+      ...prev,
+      thumbnail: null,
+      thumbnailPreview: '',
+    }));
   };
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -492,13 +758,18 @@ export default function RecordedLecturesPage() {
       
       <div className='rounded-lg p-4'>
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <input
-            type="text"       placeholder="Search videos..."
-            className="border text-sm focus:outline-none px-3 py-2 rounded w-full sm:w-72"
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-          />
-          <div className="text-sm text-gray-50">           {filteredData.length} video{filteredData.length !== 1 ? 's' : 'found'}
+          <div className="flex flex-col sm:flex-row gap-2 flex-1">
+            <input
+              type="text"
+              placeholder="Search videos..."
+              className="border text-sm focus:outline-none px-3 py-2 rounded w-full sm:w-72"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+            />
+          </div>
+          <div className="text-sm text-gray-600">
+            {filteredData.length} video{filteredData.length !== 1 ? 's' : ''} found
+            {/* <span className="ml-2 text-blue-600">• Latest on top</span> */}
           </div>
         </div>
         
@@ -680,44 +951,75 @@ export default function RecordedLecturesPage() {
                   />
                 </div>
               </div>
-            <div className='flex gap-2'>
-            <div>
-                <label htmlFor="video" className="block text-sm font-medium text-gray-700 mb-1">Video<span className="text-red-500">*</span></label>
-                <input
-                  type="file"
-                  name="video"
-                  id="video"
-                  accept="video/*"
-                  required
-                  className="block w-full text-sm text-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  onChange={handleFileChange}
-                />
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <DragDropZone
+                onFileDrop={handleVideoDrop}
+                accept="video/*"
+                preview={formData.videoPreview}
+                onRemove={handleVideoRemove}
+                label="Video"
+                required={true}
+                icon={VideoIcon}
+                fileType="video"
+              />
+              <DragDropZone
+                onFileDrop={handleThumbnailDrop}
+                accept="image/*"
+                preview={formData.thumbnailPreview}
+                onRemove={handleThumbnailRemove}
+                label="Thumbnail"
+                required={false}
+                icon={ImageIcon}
+                fileType="image"
+              />
+            </div>
+            
+            {/* File Info Display */}
+            {/* {(formData.video || formData.thumbnail) && (
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
                 {formData.video && (
-                  <div className="mt-2 text-xs text-gray-600">Selected file: {formData.video.name}</div>
+                  <div className="flex items-center justify-between bg-white p-3 rounded border">
+                    <div className="flex items-center space-x-3">
+                      <VideoIcon className="h-5 w-5 text-blue-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{formData.video.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(formData.video.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleVideoRemove}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 )}
-              </div>
-              <div>
-                <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
-                <input
-                  type="file"
-                  name="thumbnail"
-                  id="thumbnail"
-                  accept="image/*"
-                  className="block w-full text-sm text-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  onChange={handleFileChange}
-                />
-                {formData.thumbnailPreview && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                    <img
-                      src={formData.thumbnailPreview}
-                      alt="Thumbnail preview"
-                      className="w-24 h-24 object-cover rounded border"
-                    />
+                {formData.thumbnail && (
+                  <div className="flex items-center justify-between bg-white p-3 rounded border">
+                    <div className="flex items-center space-x-3">
+                      <ImageIcon className="h-5 w-5 text-green-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{formData.thumbnail.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(formData.thumbnail.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleThumbnailRemove}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                 )}
               </div>
-            </div>
+            )} */}
               {/* <div>
                 <label htmlFor="created_by" className="block text-sm font-medium text-gray-700 mb-1">Created By</label>
                 <input
@@ -755,10 +1057,10 @@ export default function RecordedLecturesPage() {
 
       {/* Edit Video Modal */}
       {showEditModal && selectedVideo && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="fixed inset-0  flex items-center justify-center z-50">
           <div className="relative w-full max-w-2xl mx-auto bg-white rounded-lg shadow-2xl p-0 max-h-[70vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-2 bg-blue-600 rounded-t-lg">
+            <div className="flex items-center justify-between px-8 py-2 bg-[#1A4D2E] rounded-t-lg">
               <h3 className="text-lg font-semibold text-white">Edit Video: {selectedVideo.name}</h3>
               <button
                 onClick={closeEditModal}
@@ -794,58 +1096,98 @@ export default function RecordedLecturesPage() {
                   />
                 </div>
               </div>
-              <div className='flex gap-2'>
-                <div>
-                  <label htmlFor="edit-video" className="block text-sm font-medium text-gray-700 mb-1">Video</label>
-                  <input
-                    type="file"
-                    name="video"
-                    id="edit-video"
-                    accept="video/*"
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      if (file) {
-                        setEditFormData(prev => ({
-                          ...prev,
-                          video: file,
-                        }));
-                      }
-                    }}
-                  />
-                  <div className="mt-2 text-xs text-gray-600">Current: {selectedVideo.video.split('/').pop()}</div>
-                </div>
-                <div>
-                  <label htmlFor="edit-thumbnail" className="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
-                  <input
-                    type="file"
-                    name="thumbnail"
-                    id="edit-thumbnail"
-                    accept="image/*"
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      if (file) {
-                        setEditFormData(prev => ({
-                          ...prev,
-                          thumbnail: file,
-                          thumbnailPreview: URL.createObjectURL(file),
-                        }));
-                      }
-                    }}
-                  />
-                  {editFormData.thumbnailPreview && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                      <img
-                        src={editFormData.thumbnailPreview}
-                        alt="Thumbnail preview"
-                        className="w-24 h-24 object-cover rounded border"
-                      />
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <DragDropZone
+                  onFileDrop={handleEditVideoDrop}
+                  accept="video/*"
+                  preview={editFormData.videoPreview}
+                  onRemove={handleEditVideoRemove}
+                  label="Video"
+                  required={false}
+                  icon={VideoIcon}
+                  fileType="video"
+                />
+                <DragDropZone
+                  onFileDrop={handleEditThumbnailDrop}
+                  accept="image/*"
+                  preview={editFormData.thumbnailPreview}
+                  onRemove={handleEditThumbnailRemove}
+                  label="Thumbnail"
+                  required={false}
+                  icon={ImageIcon}
+                  fileType="image"
+                />
+              </div>
+              
+              {/* File Info Display for Edit */}
+              {(editFormData.video || editFormData.thumbnail) && (
+                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                  <h4 className="text-sm font-medium text-gray-700">New Files Selected:</h4>
+                  {editFormData.video && (
+                    <div className="flex items-center justify-between bg-white p-3 rounded border">
+                      <div className="flex items-center space-x-3">
+                        <VideoIcon className="h-5 w-5 text-blue-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{editFormData.video.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {(editFormData.video.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleEditVideoRemove}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  {editFormData.thumbnail && (
+                    <div className="flex items-center justify-between bg-white p-3 rounded border">
+                      <div className="flex items-center space-x-3">
+                        <ImageIcon className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{editFormData.thumbnail.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {(editFormData.thumbnail.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleEditThumbnailRemove}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   )}
                 </div>
-              </div>
+              )}
+              
+              {/* Current File Info */}
+              {/* <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+                <h4 className="text-sm font-medium text-blue-700">Current Files:</h4>
+                <div className="flex items-center space-x-3 bg-white p-3 rounded border">
+                  <VideoIcon className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {selectedVideo?.video.split('/').pop() || 'Current video'}
+                    </p>
+                    <p className="text-xs text-gray-500">Existing video file</p>
+                  </div>
+                </div>
+                {selectedVideo?.thumbnail && (
+                  <div className="flex items-center space-x-3 bg-white p-3 rounded border">
+                    <ImageIcon className="h-5 w-5 text-green-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Current thumbnail</p>
+                      <p className="text-xs text-gray-500">Existing thumbnail</p>
+                    </div>
+                  </div>
+                )}
+              </div> */}
               {error && showEditModal && (
                 <div className="text-red-500 text-sm mt-2 text-center">{error}</div>
               )}
@@ -860,7 +1202,7 @@ export default function RecordedLecturesPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md font-medium hover:bg-[#1A4D2E] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Updating...' : 'Update Video'}
                 </button>

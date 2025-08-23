@@ -1,7 +1,6 @@
 "use client"
-
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 
 // Toast component
 const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) => {
@@ -38,141 +37,16 @@ const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 
   );
 };
 
-// Drag and Drop Zone Component
-const DragDropZone = ({ 
-  onDrop, 
-  children, 
-  className = "", 
-  accept = "image/*",
-  title,
-  description 
-}: { 
-  onDrop: (files: FileList) => void; 
-  children?: React.ReactNode; 
-  className?: string;
-  accept?: string;
-  title: string;
-  description: string;
-}) => {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      onDrop(files);
-    }
-  };
-
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onDrop(e.target.files);
-    }
-  };
-
-  return (
-    <div
-      className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${
-        isDragOver 
-          ? 'border-blue-500 bg-blue-50 scale-105' 
-          : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-      } ${className}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onClick={handleClick}
-    >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={accept}
-        onChange={handleFileChange}
-        className="hidden"
-      />
-      <div className="space-y-3">
-        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
-          <p className="text-sm text-gray-500">{description}</p>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-};
-
-// Image Preview Component
-const ImagePreview = ({ 
-  file, 
-  onRemove, 
-  className = "" 
-}: { 
-  file: File; 
-  onRemove: () => void; 
-  className?: string;
-}) => {
-  const [preview, setPreview] = useState<string>("");
-
-  useEffect(() => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  }, [file]);
-
-  return (
-    <div className={`relative group ${className}`}>
-      <img
-        src={preview}
-        alt="Preview"
-        className="w-full h-32 object-cover rounded-lg border border-gray-200"
-      />
-      <button
-        onClick={onRemove}
-        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-      <div className="mt-2 text-xs text-gray-500">
-        {file.name.length > 20 ? `${file.name.substring(0, 20)}...` : file.name}
-      </div>
-    </div>
-  );
-};
-
 interface Choice {
   text: string;
   is_correct: boolean;
-  graphics: File | null;
+  graphics: null;
 }
 
 interface Question {
   text: string;
   marks: string;
-  graphics: File | null;
+  graphics: null;
   choices: Choice[];
 }
 
@@ -242,86 +116,13 @@ const Page = () => {
     }));
   }, []);
 
-  // Debug: Log sessionStorage values when component mounts
-  useEffect(() => {
-    const practiceExamValue = sessionStorage.getItem("is_practice_exam_grand_test");
-    console.log("Component mounted - SessionStorage is_practice_exam_grand_test value:", practiceExamValue);
-    console.log("Component mounted - SessionStorage is_practice_exam_grand_test type:", typeof practiceExamValue);
-    console.log("All sessionStorage keys:", Object.keys(sessionStorage));
-    
-    // Warning if the value is not set
-    if (!practiceExamValue) {
-      console.warn("⚠️ is_practice_exam_grand_test is not set in sessionStorage!");
-      console.warn("This might cause the is_practice_exam field to be omitted from the API request.");
-    }
-  }, []);
-
-  // Debug: Watch for changes to sessionStorage value
-  useEffect(() => {
-    const checkSessionStorage = () => {
-      const practiceExamValue = sessionStorage.getItem("is_practice_exam_grand_test");
-      console.log("SessionStorage check - is_practice_exam_grand_test value:", practiceExamValue);
-    };
-    
-    // Check immediately
-    checkSessionStorage();
-    
-    // Check after a short delay to see if it gets set
-    const timer = setTimeout(checkSessionStorage, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.type.startsWith('image/')) {
-        setFormData(prev => ({
-          ...prev,
-          thumbnail: file
-        }));
-      } else {
-        setToast({ message: "Please select an image file", type: 'error' });
-      }
-    }
-  };
-
-  const handleQuestionImageDrop = (files: FileList) => {
-    const file = files[0];
-    if (file.type.startsWith('image/')) {
-      setCurrentQuestion(prev => ({
+      setFormData(prev => ({
         ...prev,
-        graphics: file
+        thumbnail: e.target.files![0]
       }));
-    } else {
-      setToast({ message: "Please select an image file for the question", type: 'error' });
     }
-  };
-
-  const handleChoiceImageDrop = (files: FileList) => {
-    const file = files[0];
-    if (file.type.startsWith('image/')) {
-      setCurrentChoice(prev => ({
-        ...prev,
-        graphics: file
-      }));
-    } else {
-      setToast({ message: "Please select an image file for the option", type: 'error' });
-    }
-  };
-
-  const removeQuestionImage = () => {
-    setCurrentQuestion(prev => ({
-      ...prev,
-      graphics: null
-    }));
-  };
-
-  const removeChoiceImage = () => {
-    setCurrentChoice(prev => ({
-      ...prev,
-      graphics: null
-    }));
   };
 
   const addChoice = () => {
@@ -396,24 +197,17 @@ const Page = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Debug: Log the sessionStorage value
-    const practiceExamValue = sessionStorage.getItem("is_practice_exam_grand_test");
-    console.log("SessionStorage is_practice_exam_grand_test value:", practiceExamValue);
-    console.log("SessionStorage is_practice_exam_grand_test type:", typeof practiceExamValue);
-    
+
+    const is_practice_exam = sessionStorage.getItem("is_practice_exam_chapter_test");
     const submitData = {
       title: formData.title,
       description: formData.description,
-      exam_type: "grand",
+      exam_type: "chapter",
       thumbnail: null,
-      // Only include is_practice_exam if it has a valid value
-      // The API might not support this field yet
-      is_practice_exam: practiceExamValue, 
-      // ...(practiceExamValue && { is_practice_exam: practiceExamValue === "true" }),
       subject: sessionStorage.getItem("id_subject"),
       track: sessionStorage.getItem("id_track"),
       total_marks: 1,
+      is_practice_exam: is_practice_exam,
       questions: formData.questions.map((q, index) => ({
         id: 37 + index,
         text: q.text,
@@ -428,25 +222,13 @@ const Page = () => {
       }))
     };
 
-    // Debug: Log the complete submitData object
-    console.log("Complete submitData being sent to API:", submitData);
-    console.log("is_practice_exam value in submitData:", submitData.is_practice_exam);
-    console.log("is_practice_exam type in submitData:", typeof submitData.is_practice_exam);
-    console.log("JSON stringified request body:", JSON.stringify(submitData));
-    console.log("Note: is_practice_exam field is conditionally included only if sessionStorage has a value");
-
     try {
         const token = sessionStorage.getItem('Authorization');
            if (!token) {
               throw new Error('No authorization token found');
               }
     
-      // Debug: Log the API URL and token
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/exams_app/track-exams/create/`;
-      console.log("API URL:", apiUrl);
-      console.log("Authorization token exists:", !!token);
-      
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exams_app/track-exams/create/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -455,15 +237,9 @@ const Page = () => {
         body: JSON.stringify(submitData),
       });
       
-      // Debug: Log the response details
-      console.log("API Response status:", response.status);
-      console.log("API Response headers:", Object.fromEntries(response.headers.entries()));
-      
       if (response.ok) {
-        const responseData = await response.json();
-        console.log("API Success Response:", responseData);
-        setToast({ message: "Grand Test created successfully!", type: 'success' });
-        // Reset form after successful creation
+        setToast({ message: "Exam created successfully!", type: 'success' });
+        router.push(`/dashboard/track-list/track/subject-list/subject-cards/chapters/content/exam/all-tests`);
         setFormData({
           title: "",
           description: "",
@@ -474,15 +250,13 @@ const Page = () => {
           total_marks: "0",
           questions: []
         });
-        router.push("/dashboard/track-list/track/subject-list/subject-cards/grand-test/all-tests");
       } else {
         const errorData = await response.json();
-        console.log("API Error Response:", errorData);
-        setToast({ message: `Failed to create grand test: ${errorData.message || 'Unknown error'}`, type: 'error' });
+        setToast({ message: `Failed to create exam: ${errorData.message || 'Unknown error'}`, type: 'error' });
       }
     } catch (error) {
       console.error('Error:', error);
-      setToast({ message: 'Error creating grand test', type: 'error' });
+      setToast({ message: 'Error creating exam', type: 'error' });
     }
   };
 
@@ -497,12 +271,12 @@ const Page = () => {
         />
       )}
       
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-5xl mx-auto px-6">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Header Section */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">{sessionStorage.getItem("is_practice_exam_grand_test") === "true" ? "  Practice Grand Test Creation" : "Grand Test Creation"}</h1>
-            <p className="text-gray-600 text-lg">Create comprehensive grand tests for your students</p>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">{sessionStorage.getItem("is_practice_exam_chapter_test")==="true" ? "Practice" : "" } Chapter Exam Creation</h1>
+            <p className="text-gray-600 text-lg">Create comprehensive exams for your students</p>
           </div>
 
           {/* Info Cards */}
@@ -525,17 +299,29 @@ const Page = () => {
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-gray-500 text-sm font-semibold uppercase tracking-wide">Exam Type</h3>
-                  <p className="text-gray-900 text-lg font-bold">{sessionStorage.getItem("is_practice_exam_grand_test") === "true" ? "Practice Grand Test" : "Grand Test"}</p>
+                  <h3 className="text-gray-500 text-sm font-semibold uppercase tracking-wide">Chapter</h3>
+                  <p className="text-gray-900 text-lg font-bold">{sessionStorage.getItem("chapter_name")}</p>
                 </div>
               </div>
             </div>
 
-           
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-gray-500 text-sm font-semibold uppercase tracking-wide">Description</h3>
+                  <p className="text-gray-800 text-sm leading-relaxed line-clamp-2" dangerouslySetInnerHTML={{ __html: sessionStorage.getItem("chapter_description") || "" }}></p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Basic Information */}
@@ -555,7 +341,7 @@ const Page = () => {
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter grand test title"
+                  placeholder="Enter exam title"
                   required
                 />
               </div>
@@ -580,7 +366,7 @@ const Page = () => {
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
                 rows={4}
-                placeholder="Enter grand test description"
+                placeholder="Enter exam description"
                 required
               />
             </div>
@@ -596,7 +382,6 @@ const Page = () => {
             </h3>
             
             <div className="space-y-6">
-              {/* Question Input Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Question Text *</label>
@@ -613,7 +398,7 @@ const Page = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Marks *</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="1.0"
                     value={currentQuestion.marks}
                     onChange={(e) => setCurrentQuestion(prev => ({ ...prev, marks: e.target.value }))}
                     className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
@@ -622,80 +407,36 @@ const Page = () => {
                 </div>
               </div>
 
-              {/* Question Image Upload */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Question Image (Optional)</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <DragDropZone
-                    onDrop={handleQuestionImageDrop}
-                    accept="image/*"
-                    title="Drag & Drop Question Image"
-                    description="or click to browse (Images only)"
-                    className="h-60"
-                  />
-                  {currentQuestion.graphics && (
-                    <ImagePreview
-                      file={currentQuestion.graphics}
-                      onRemove={removeQuestionImage}
-                      className="h-60"
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Choice Input Section */}
               <div className="bg-gray-50 rounded-xl p-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-4">Add Choice *</label>
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-4 items-start">
-                    <input
-                      type="text"
-                      value={currentChoice.text}
-                      onChange={(e) => setCurrentChoice(prev => ({ ...prev, text: e.target.value }))}
-                      className="flex-1 p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-                      placeholder="Enter choice text"
-                    />
-                    <div className="flex items-center space-x-4">
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={currentChoice.is_correct}
-                          onChange={(e) => setCurrentChoice(prev => ({ ...prev, is_correct: e.target.checked }))}
-                          className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                        />
-                        <span className="text-sm font-medium text-gray-700">Correct</span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={addChoice}
-                        className="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Choice Image Upload */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">Choice Image (Optional)</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <DragDropZone
-                        onDrop={handleChoiceImageDrop}
-                        accept="image/*"
-                        title="Drag & Drop Choice Image"
-                        description="or click to browse (Images only)"
-                        className="h-60"
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                  <input
+                    type="text"
+                    value={currentChoice.text}
+                    onChange={(e) => setCurrentChoice(prev => ({ ...prev, text: e.target.value }))}
+                    className="flex-1 p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter choice text"
+                  />
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={currentChoice.is_correct}
+                        onChange={(e) => setCurrentChoice(prev => ({ ...prev, is_correct: e.target.checked }))}
+                        className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
                       />
-                      {currentChoice.graphics && (
-                        <ImagePreview
-                          file={currentChoice.graphics}
-                          onRemove={removeChoiceImage}
-                          className="h-60"
-                        />
-                      )}
-                    </div>
+                      <span className="text-sm font-medium text-gray-700">Correct</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addChoice}
+                      className="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m6 0H6" />
+                      </svg>
+                      {/* <span>Add</span> */}
+                    </button>
                   </div>
                 </div>
                 
@@ -798,18 +539,6 @@ const Page = () => {
                           </span>
                           <p className="font-semibold text-gray-800 text-lg">{question.text}</p>
                         </div>
-                        
-                        {/* Question Image Preview */}
-                        {question.graphics && (
-                          <div className="mb-4">
-                            <img
-                              src={URL.createObjectURL(question.graphics)}
-                              alt="Question"
-                              className="max-w-xs h-32 object-cover rounded-lg border border-gray-200"
-                            />
-                          </div>
-                        )}
-                        
                         <div className="flex items-center space-x-4 mb-4">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -877,7 +606,7 @@ const Page = () => {
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Create Grand Test</span>
+              <span>Create Exam</span>
             </button>
           </div>
         </form>

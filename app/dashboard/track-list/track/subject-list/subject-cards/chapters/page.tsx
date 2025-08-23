@@ -1,11 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Upload, X } from 'lucide-react';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -36,6 +36,7 @@ export default function ChaptersPage() {
   const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
   const pageSize = 10;
 
   // Form state for adding new chapter
@@ -45,6 +46,10 @@ export default function ChaptersPage() {
     thumbnail: null as File | null,
     thumbnailPreview: ''
   });
+
+  // Drag and drop refs
+  const createDropRef = useRef<HTMLDivElement>(null);
+  const editDropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Check if we're on the client side
@@ -145,6 +150,39 @@ export default function ChaptersPage() {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent, isEdit: boolean = false) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setFormData(prev => ({
+        ...prev,
+        thumbnail: file,
+        thumbnailPreview: URL.createObjectURL(file)
+      }));
+    }
+  };
+
+  const removeThumbnail = () => {
+    setFormData(prev => ({ ...prev, thumbnail: null, thumbnailPreview: '' }));
+  };
+
+  const handleDropZoneClick = (ref: React.RefObject<HTMLDivElement>) => {
+    const input = ref.current?.querySelector('input[type="file"]') as HTMLInputElement;
+    if (input) {
+      input.click();
+    }
+  };
+
   const handleAddChapter = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -233,22 +271,46 @@ export default function ChaptersPage() {
         throw new Error('No authorization token found');
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/chapters/${editingChapter.id}/`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          description: formData.description,
-          subject: subjectId,
-        }),
-      });
+      // Create FormData for file upload if thumbnail is changed
+      if (formData.thumbnail) {
+        const formDataToSend = new FormData();
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('subject', subjectId!);
+        formDataToSend.append('thumbnail', formData.thumbnail);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update chapter');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/chapters/${editingChapter.id}/`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': token,
+            // Don't set Content-Type for FormData
+          },
+          body: formDataToSend,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to update chapter');
+        }
+      } else {
+        // No thumbnail change, use JSON
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks_app/chapters/${editingChapter.id}/`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            subject: subjectId,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to update chapter');
+        }
       }
 
       setIsEditModalOpen(false);
@@ -491,23 +553,61 @@ export default function ChaptersPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Thumbnail
                   </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                  {formData.thumbnailPreview && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                      <img
-                        src={formData.thumbnailPreview}
-                        alt="Thumbnail preview"
-                        className="w-32 h-32 object-cover rounded-md border border-gray-300"
-                      />
-                    </div>
-                  )}
+                  <div
+                    ref={createDropRef}
+                    className={`relative w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      isDragOver 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, false)}
+                    onClick={() => handleDropZoneClick(createDropRef)}
+                  >
+                    {formData.thumbnailPreview ? (
+                      <div className="relative">
+                        <img
+                          src={formData.thumbnailPreview}
+                          alt="Thumbnail preview"
+                          className="w-32 h-32 object-cover rounded-lg mx-auto"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeThumbnail();
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          aria-label="Remove thumbnail"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            {isDragOver ? 'Drop image here' : 'Click to upload or drag and drop'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PNG, JPG, GIF up to 10MB
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </div>
                 </div>
+                {modalError && (
+                  <div className="text-red-500 text-sm mt-2 text-center">{modalError}</div>
+                )}
                 {/* Footer */}
                 <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                   <button
@@ -583,6 +683,62 @@ export default function ChaptersPage() {
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thumbnail
+                  </label>
+                  <div
+                    ref={editDropRef}
+                    className={`relative w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      isDragOver 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, true)}
+                    onClick={() => handleDropZoneClick(editDropRef)}
+                  >
+                    {formData.thumbnailPreview ? (
+                      <div className="relative">
+                        <img
+                          src={formData.thumbnailPreview}
+                          alt="Thumbnail preview"
+                          className="w-32 h-32 object-cover rounded-lg mx-auto"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeThumbnail();
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          aria-label="Remove thumbnail"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            {isDragOver ? 'Drop image here' : 'Click to upload or drag and drop'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PNG, JPG, GIF up to 10MB
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
                 {modalError && (
                   <div className="text-red-500 text-sm mt-2 text-center">{modalError}</div>
                 )}
@@ -603,7 +759,7 @@ export default function ChaptersPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md  disabled:opacity-50 transition-colors"
                   >
                     {isSubmitting ? 'Updating...' : 'Update Chapter'}
                   </button>

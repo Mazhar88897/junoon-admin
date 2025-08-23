@@ -367,9 +367,7 @@ export default function SubjectsPage() {
     return <div className="p-6">Loading subjects...</div>;
   }
 
-  if (subjects.length === 0) {
-    return <div className="p-6">No subjects found for this track.</div>;
-  }
+  // Remove the early return for empty subjects - we want to show heading and add button always
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -383,15 +381,17 @@ export default function SubjectsPage() {
         </button>
       </h1>
       <div className='border-grey-800 border-2 rounded-lg p-4'>
-        <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <input
-            type="text"
-            placeholder="Type in to Search"
-            className="border text-sm focus:outline-none px-3 py-2 rounded w-full sm:w-72"
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-          />
-        </div>
+        {subjects.length > 0 && (
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <input
+              type="text"
+              placeholder="Type in to Search"
+              className="border text-sm focus:outline-none px-3 py-2 rounded w-full sm:w-72"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+            />
+          </div>
+        )}
         <div className="overflow-x-auto bg-white rounded-lg shadow">
           <table className="min-w-full border-grey-800 border-2 text-sm">
             <thead>
@@ -458,38 +458,60 @@ export default function SubjectsPage() {
                 </tr>
               ))}
               {pagedData.length === 0 && (
-                <tr><td colSpan={6} className="text-center p-6 text-gray-400">No data found.</td></tr>
+                <tr>
+                  <td colSpan={6} className="text-center p-8 text-gray-500">
+                    {subjects.length === 0 ? (
+                      <div className="flex flex-col items-center space-y-2">
+                        <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p className="text-lg font-medium text-gray-600">No subjects found</p>
+                        <p className="text-sm text-gray-400">Get started by adding your first subject using the button above.</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center space-y-2">
+                        <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <p className="text-lg font-medium text-gray-600">No subjects match your search</p>
+                        <p className="text-sm text-gray-400">Try adjusting your search terms.</p>
+                      </div>
+                    )}
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
         {/* Pagination */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex">
-            <button
-              className={`px-2 text-xs border ${page === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-gray-50'}`}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >Prev</button>
-            {[...Array(pageCount)].map((_, idx) => (
+        {subjects.length > 0 && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex">
               <button
-                key={idx}
-                className={`px-2 py-1 text-xs border ${page === idx + 1 ? 'bg-[#6d7efc] text-white' : 'bg-white hover:bg-gray-50'}`}
-                onClick={() => setPage(idx + 1)}
-              >{idx + 1}</button>
-            ))}
-            <button
-              className={`px-2 text-xs border ${page === pageCount || pageCount === 0 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-purple1050'}`}
-              onClick={() => setPage(p => Math.min(pageCount, p + 1))}
-              disabled={page === pageCount || pageCount === 0}
-            >Next</button>
+                className={`px-2 text-xs border ${page === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-gray-50'}`}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >Prev</button>
+              {[...Array(pageCount)].map((_, idx) => (
+                <button
+                  key={idx}
+                  className={`px-2 py-1 text-xs border ${page === idx + 1 ? 'bg-[#6d7efc] text-white' : 'bg-white hover:bg-gray-50'}`}
+                  onClick={() => setPage(idx + 1)}
+                >{idx + 1}</button>
+              ))}
+              <button
+                className={`px-2 text-xs border ${page === pageCount || pageCount === 0 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-purple1050'}`}
+                onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+                disabled={page === pageCount || pageCount === 0}
+              >Next</button>
+            </div>
+            <div className="text-xs text-gray-500">
+              {pagedData.length > 0 && (
+                <span>{(page - 1) * pageSize + 1}-{(page - 1) * pageSize + pagedData.length} of {filteredData.length}</span>
+              )}
+            </div>
           </div>
-          <div className="text-xs text-gray-500">
-            {pagedData.length > 0 && (
-              <span>{(page - 1) * pageSize + 1}-{(page - 1) * pageSize + pagedData.length} of {filteredData.length}</span>
-            )}
-          </div>
-        </div>
+        )}
       </div>
       {/* Add New Subject Modal */}
       {showModal && (

@@ -2,10 +2,11 @@
 import Link from "next/link";
 // chapter /  recorded lecture  / add note
 import { BookOpenCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 const categories = [
   
   {
-    key: "/dashboard/track-list/track/subject-list/subject-cards/grand-test/test",
+    key: "/dashboard/track-list/track/subject-list/subject-cards/grand-test/all-tests",
     name: " Grand Test",
     subCount: 5,
     description: "Create a grand test for Entire Subject",
@@ -19,15 +20,22 @@ const categories = [
 ];
 // by  chapter / grand test
 export default function TrackCategoryPage() {
+  const router = useRouter();
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <h1 className="text-xl font-bold mb-6">Grand Test</h1>
       {/* <p className="text-gray-500 mb-6 text-sm">You have total {categories.length} Categories</p> */}
       <div className="flex flex-wrap gap-4">
         {categories.map((cat) => (
-            <Link
+            <div
             key={cat.key}
-            href={`${cat.key}`}
+            //  href={`${cat.key}`}
+            onClick={() => {
+              sessionStorage.setItem("is_practice_exam_grand_test", "false");
+              console.log("Setting is_practice_exam_grand_test to false");
+              console.log("Value after setting:", sessionStorage.getItem("is_practice_exam_grand_test"));
+              router.push(cat.key);
+            }}
             className="block w-[500px] group cursor-pointer"
           >
             <div className="flex flex-col h-full">
@@ -54,7 +62,7 @@ export default function TrackCategoryPage() {
                 </div>
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
@@ -63,9 +71,15 @@ export default function TrackCategoryPage() {
       {/* <p className="text-gray-500 mb-6 text-sm">You have total {categories.length} Categories</p> */}
       <div className="flex flex-wrap gap-4">
         {categories.map((cat) => (
-         <Link
+         <div
          key={cat.key}
-         href={`${cat.key}`}
+         //  href={`${cat.key}`}
+         onClick={() => {
+          sessionStorage.setItem("is_practice_exam_grand_test", "true");
+          console.log("Setting is_practice_exam_grand_test to true");
+          console.log("Value after setting:", sessionStorage.getItem("is_practice_exam_grand_test"));
+          router.push(cat.key);
+        }}
          className="block w-[500px] group cursor-pointer"
        >
          <div className="flex flex-col h-full">
@@ -92,7 +106,7 @@ export default function TrackCategoryPage() {
              </div>
            </div>
          </div>
-       </Link>
+       </div>
         ))}
       </div>
     </div>

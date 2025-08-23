@@ -147,13 +147,26 @@ export default function NotesPage() {
     fetchChapters();
   }, [subjectId]);
 
-  // Search filter (search by name, description)
+  // Search filter and sorting (search by name, description, sort by modified_on in ascending order)
   const filteredData = useMemo(() => {
-    if (!search) return notes;
-    return notes.filter(row =>
-      row.name.toLowerCase().includes(search.toLowerCase()) ||
-      row.description.toLowerCase().includes(search.toLowerCase())
-    );
+    let filtered = notes;
+    
+    // Apply search filter
+    if (search) {
+      filtered = notes.filter(row =>
+        row.name.toLowerCase().includes(search.toLowerCase()) ||
+        row.description.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    // Sort by modified_on in descending order (newest to oldest)
+    filtered = [...filtered].sort((a, b) => {
+      const dateA = a.modified_on ? new Date(a.modified_on) : new Date(a.created_on);
+      const dateB = b.modified_on ? new Date(b.modified_on) : new Date(b.created_on);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    return filtered;
   }, [search, notes]);
 
   // Pagination
@@ -357,7 +370,15 @@ export default function NotesPage() {
       formDataToSend.append('chapter', sessionStorage.getItem('chapter_id') || '');
       formDataToSend.append('name', editFormData.name);
       formDataToSend.append('description', editFormData.description);
-      if (editFormData.source) formDataToSend.append('source', editFormData.source);
+      
+      // Handle source file - if new file selected, use it; otherwise preserve existing source
+      if (editFormData.source) {
+        formDataToSend.append('source', editFormData.source);
+      } else if (editFormData.sourcePreview) {
+        // If no new file selected but we have existing source, send the existing source URL
+        formDataToSend.append('source', editFormData.sourcePreview);
+      }
+      
       if (editFormData.thumbnail) formDataToSend.append('thumbnail', editFormData.thumbnail);
       formDataToSend.append('created_by', sessionStorage.getItem('user_email') || '');
 
@@ -371,7 +392,12 @@ export default function NotesPage() {
       });
 
       if (!response.ok) {
-        toast.error('Failed to update note - source file is required');
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.source) {
+          toast.error(`Failed to update note: ${errorData.source[0]}`);
+        } else {
+          toast.error('Failed to update note');
+        }
         return;
       }
       toast.success('Note updated successfully');
@@ -485,9 +511,7 @@ export default function NotesPage() {
     return <div className="p-6">Loading notes...</div>;
   }
 
-  if (notes.length === 0) {
-    return <div className="p-6">No notes found for this subject.</div>;
-  }
+  // Remove the early return for empty notes - we want to show heading and add button always
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -502,18 +526,20 @@ export default function NotesPage() {
       </div>
       
       <div className='border-grey-800 border-2 rounded-lg p-4'>
-        <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <input
-            type="text"
-            placeholder="Search notes..."
-            className="border text-sm focus:outline-none px-3 py-2 rounded w-full sm:w-72"
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-          />
-          <div className="text-sm text-gray-500">
-            {filteredData.length} note{filteredData.length !== 1 ? 's' : ''} found
+        {notes.length > 0 && (
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <input
+              type="text"
+              placeholder="Search notes..."
+              className="border text-sm focus:outline-none px-3 py-2 rounded w-full sm:w-72"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+            />
+            <div className="text-sm text-gray-500">
+              {filteredData.length} note{filteredData.length !== 1 ? 's' : ''} found
+            </div>
           </div>
-        </div>
+        )}
         
         <div className="overflow-x-auto bg-white rounded-lg shadow">
           <table className="min-w-full border-grey-800 border-2 text-sm">
@@ -577,12 +603,35 @@ export default function NotesPage() {
                   </td>
                 </tr>
               ))}
+              {pagedData.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="text-center p-8 text-gray-500">
+                    {notes.length === 0 ? (
+                      <div className="flex flex-col items-center space-y-2">
+                        <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p className="text-lg font-medium text-gray-600">No notes found</p>
+                        <p className="text-sm text-gray-400">Get started by adding your first note using the button above.</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center space-y-2">
+                        <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <p className="text-lg font-medium text-gray-600">No notes match your search</p>
+                        <p className="text-sm text-gray-400">Try adjusting your search terms.</p>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
         
         {/* Pagination */}
-        {pageCount > 1 && (
+        {notes.length > 0 && pageCount > 1 && (
           <div className="flex items-center justify-between mt-4">
             <div className="flex">
               <button
