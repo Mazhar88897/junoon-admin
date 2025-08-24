@@ -106,7 +106,7 @@ export default function AllGrandTestsPage() {
 
   const handleRowClick = (exam: GrandExam) => {
     // Navigate to exam details or take exam
-    router.push(`/dashboard/track-list/track/subject-list/subject-cards/grand-test/test/${exam.id}`);
+    router.push(`/dashboard/track-list/track/subject-list/subject-cards/grand-test/all-tests/test`);
   };
 
   const handleCreateExam = () => {
@@ -215,7 +215,8 @@ export default function AllGrandTestsPage() {
                 <tr
                   key={row.id}
                   className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
-                  onClick={() => handleRowClick(row)}
+                  onClick={() => {sessionStorage.setItem("exam_id_grand_test", row.id.toString());
+                    handleRowClick(row); }}
                 >
                   <td className="p-3 font-semibold text-slate-800">
                     {(page - 1) * pageSize + i + 1}

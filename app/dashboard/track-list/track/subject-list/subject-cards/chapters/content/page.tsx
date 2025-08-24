@@ -18,7 +18,7 @@ const categories = [
     key: "/dashboard/track-list/track/subject-list/subject-cards/chapters/content/exam",
     name: "Chapter Exam Management",
     subCount: 5,
-    description: "Generate a comprehensive exam covering the entire subject (Grand Test).",
+    description: "Generate chapter-wise tests for each chapter.",
     color: "bg-yellow-400",
     code: "WD",
     icon: <BookOpenCheck />,

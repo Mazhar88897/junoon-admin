@@ -104,10 +104,10 @@ export default function AllChapterTestsPage() {
   const pageCount = Math.ceil(filteredData.length / pageSize);
   const pagedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
 
-  // const handleRowClick = (exam: ChapterExam) => {
-  //   // Navigate to exam details or take exam
-  //   router.push(`/dashboard/track-list/track/subject-list/subject-cards/chapters/content/exam/test/${exam.id}`);
-  // };
+  const handleRowClick = (exam: ChapterExam) => {
+    // Navigate to exam details or take exam
+    router.push(`/dashboard/track-list/track/subject-list/subject-cards/chapters/content/exam/all-tests/test`);
+  };
 
   const handleCreateExam = () => {
     // Navigate to create exam page
@@ -245,7 +245,7 @@ export default function AllChapterTestsPage() {
                   pagedData.map((exam, index) => (
                     <tr
                       key={exam.id}
-                      // onClick={() => handleRowClick(exam)}
+                      onClick={() => {sessionStorage.setItem("exam_id_chapter_test", exam.id.toString());handleRowClick(exam);}}
                       className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
                     >
                       <td className="p-3">
