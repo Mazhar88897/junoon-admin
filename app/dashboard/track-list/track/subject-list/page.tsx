@@ -28,6 +28,8 @@ interface Subject {
   description: string;
   thumbnail: string | null;
   chapters: Chapter[];
+  created_by: string;
+  modified_on: string;
 }
 
 export default function SubjectsPage() {
@@ -93,6 +95,7 @@ export default function SubjectsPage() {
         }
 
         const data = await response.json();
+        console.log(data);
         setSubjects(data);
        
       } catch (err) {
@@ -401,7 +404,9 @@ export default function SubjectsPage() {
                 <th className="p-3 text-left">Name</th>
                 <th className="p-3 text-left">Description</th>
                 <th className="p-3 text-left">Chapters</th>
-                <th className="p-3"></th>
+                <th className="p-3 text-left">Created By</th>
+                <th className="p-3 text-left">Last Modified</th>
+                <th className="p-3">Actions</th>
               </tr>
             </thead>
             <tbody className='border-grey-800 text-xs border-2'>
@@ -429,6 +434,8 @@ export default function SubjectsPage() {
                     />
                   </td>
                   <td className="p-3">{row.chapters.length}</td>
+                  <td className="p-3">{row.created_by}</td>  {/* NEW */}
+                  <td className="p-3">{new Date(row.modified_on).toLocaleString()}</td> {/* NEW */}
                   <td className="p-3 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button

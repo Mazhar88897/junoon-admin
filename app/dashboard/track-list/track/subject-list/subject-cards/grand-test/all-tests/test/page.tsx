@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
-import { Eye, Edit, Trash2, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 interface Choice {
   id: number;
@@ -25,65 +24,37 @@ interface Question {
 interface ExamData {
   id: number;
   questions: Question[];
-  is_deleted: boolean;
-  deleted_by: string | null;
-  deleted_on: string | null;
-  created_by: string;
-  created_on: string;
-  modified_by: string | null;
-  modified_on: string;
+  total_marks: string;
   title: string;
   description: string;
   exam_type: string;
-  thumbnail: string | null;
-  total_marks: string;
-  is_practice_exam: boolean;
   subject: number;
-  track: number;
-  chapter: number | null;
-  topic: number | null;
+  thumbnail: string | null;
 }
 
 export default function AdminExamReviewPage() {
   const [examData, setExamData] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
-  // Fetch exam data
   useEffect(() => {
     const fetchExamData = async () => {
       try {
         setLoading(true);
-        
-        // Get authorization token
         const token = sessionStorage.getItem('Authorization');
-        if (!token) {
-          throw new Error('No authorization token found. Please login again.');
-        }
+        if (!token) throw new Error('No authorization token found.');
 
-        // Replace with your actual base URL
         const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-        const examId = sessionStorage.getItem("exam_id_grand_test");
-        
-        if (!examId) {
-          throw new Error('No exam ID found in session storage.');
-        }
+        const examId = sessionStorage.getItem('exam_id_grand_test');
+        if (!examId) throw new Error('No exam ID found in session storage.');
 
         const response = await fetch(`${baseUrl}/api/exams_app/questions/by-trackexam?track_exam_id=${examId}`, {
-          headers: {
-            'Authorization': token,
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Authorization': token, 'Content-Type': 'application/json' }
         });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error('Authentication failed. Please login again.');
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
         const data = await response.json();
         setExamData(data);
         setError(null);
@@ -98,287 +69,143 @@ export default function AdminExamReviewPage() {
     fetchExamData();
   }, []);
 
-  const handleEditExam = () => {
-    alert('Edit functionality to be implemented');
+  const handleEditQuestion = (questionId: number) => console.log('Edit question', questionId);
+  const handleDeleteQuestion = (questionId: number) => {
+    if (confirm('Are you sure you want to delete this question?')) console.log('Delete question', questionId);
+  };
+  const handleEditChoice = (choiceId: number) => console.log('Edit choice', choiceId);
+  const handleDeleteChoice = (choiceId: number) => {
+    if (confirm('Are you sure you want to delete this choice?')) console.log('Delete choice', choiceId);
   };
 
-  const handleDeleteExam = () => {
-    if (confirm('Are you sure you want to delete this exam? This action cannot be undone.')) {
-      alert('Delete functionality to be implemented');
-    }
-  };
-
-  const toggleQuestionExpansion = (questionId: number) => {
-    setExpandedQuestion(expandedQuestion === questionId ? null : questionId);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading exam data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center text-red-600">
-              <p className="text-lg font-semibold">Error Loading Exam</p>
-              <p className="text-sm mt-2">{error}</p>
-              <div className="mt-4 space-y-2">
-                {error.includes('authorization') || error.includes('Authentication') ? (
-                  <Button 
-                    onClick={() => window.location.href = '/auth'} 
-                    className="w-full"
-                    variant="default"
-                  >
-                    Go to Login
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={() => window.location.reload()} 
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Retry
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!examData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">No exam data available</p>
-      </div>
-    );
-  }
+  if (loading) return <p className="text-center mt-10">Loading exam...</p>;
+  if (error) return <p className="text-center mt-10 text-red-600">{error}</p>;
+  if (!examData) return <p className="text-center mt-10">No exam data available.</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Simple Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">{examData.title}</h1>
-              <p className="text-gray-600">{examData.description}</p>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Exam Header */}
+        {/* <Card className="shadow-lg rounded-2xl overflow-hidden">
+          {examData.thumbnail && (
+            <img
+              src={examData.thumbnail}
+              alt="Exam thumbnail"
+              className="w-full h-48 object-cover"
+            />
+          )}
+          <CardContent className="p-6">
+            <h1 className="text-2xl font-bold text-gray-800">{examData.title}</h1>
+            <p className="text-gray-600 mt-1">{examData.description}</p>
+            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 mt-2">
+              <span>Questions: {examData.questions.length}</span>
+              <span>Total Marks: {examData.total_marks}</span>
+              <span>Type: {examData.exam_type}</span>
+              <span>Subject: {examData.subject}</span>
             </div>
-            {/* <div className="flex items-center gap-3">
-              <Button
-                onClick={handleEditExam}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Edit
-              </Button>
-              <Button
-                onClick={handleDeleteExam}
-                variant="destructive"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
-            </div> */}
+          </CardContent>
+        </Card> */}
+
+        <div className="w-full rounded-2xl shadow-md overflow-hidden bg-white border">
+      <div className="flex flex-col md:flex-row">
+        {/* Left Image */}
+        {examData.thumbnail && (
+          <div className="w-full md:w-60 h-48 md:h-auto">
+            <img
+              src={examData.thumbnail}
+              alt={examData.title}
+              className="object-cover w-full h-full"
+            />
           </div>
-          
+        )}
+
+        {/* Right Content */}
+        <div className="p-6 flex flex-col justify-start flex-1">
+          <h5 className="text-2xl font-bold text-gray-900">{examData.title}</h5>
+
+          {/* Description */}
+          {examData.description && (
+            <div
+              className={`text-base text-gray-600 mt-3 leading-relaxed transition-all duration-300 ${
+                expanded ? "line-clamp-none" : "line-clamp-1"
+              }`}
+              dangerouslySetInnerHTML={{ __html: examData.description }}
+            />
+          )}
+
+          {/* Toggle Button */}
+          {examData.description && (
+            <button
+              className="text-sm text-blue-600 mt-2 hover:underline self-start"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? "See less" : "See more"}
+            </button>
+          )}
+
           {/* Basic Info */}
-          <div className="flex items-center gap-6 text-sm text-gray-600">
+          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-4">
             <span>Questions: {examData.questions.length}</span>
             <span>Total Marks: {examData.total_marks}</span>
             <span>Type: {examData.exam_type}</span>
             <span>Subject: {examData.subject}</span>
           </div>
         </div>
+      </div>
+    </div>
 
-        {/* Questions Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Questions ({examData.questions.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="w-16 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                      #
-                    </th>
-                    <th className="w-20 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                      Marks
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                      Question
-                    </th>
-                    <th className="w-32 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                      Graphics
-                    </th>
-                    <th className="w-32 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                      Choices
-                    </th>
-                    <th className="w-24 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {examData.questions.map((question, index) => (
-                    <>
-                      <tr key={question.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900 border-b border-gray-200">
-                          {index + 1}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-200">
-                          {question.marks}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-200">
-                          <div className="max-w-md">
-                            <p className="text-sm text-gray-900 line-clamp-2">
-                              {question.text}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-200">
-                          {question.graphics ? (
-                            <Badge variant="default" className="text-xs">Yes</Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">No</Badge>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-200">
-                          <Badge variant="outline" className="text-xs">
-                            {question.choices.length} choices
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-200">
-                          <Button
-                            onClick={() => toggleQuestionExpansion(question.id)}
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                      
-                      {/* Expanded Question Details */}
-                      {expandedQuestion === question.id && (
-                        <tr>
-                          <td colSpan={6} className="bg-gray-50 p-4 border-b border-gray-200">
-                          <div className="space-y-4">
-                            {/* Full Question Text */}
-                            <div>
-                              <h4 className="font-semibold text-gray-800 mb-2">Full Question:</h4>
-                              <p className="text-gray-700 bg-white p-3 rounded border">
-                                {question.text}
-                              </p>
-                            </div>
 
-                            {/* Question Graphics */}
-                            {question.graphics && (
-                              <div>
-                                <h4 className="font-semibold text-gray-800 mb-2">Question Graphics:</h4>
-                                <img 
-                                  src={question.graphics} 
-                                  alt="Question graphic" 
-                                  className="max-w-md h-auto rounded border"
-                                />
-                              </div>
-                            )}
-
-                            {/* Choices Table */}
-                            <div>
-                              <h4 className="font-semibold text-gray-800 mb-2">Choices:</h4>
-                              <div className="bg-white rounded border overflow-hidden">
-                                <table className="w-full">
-                                  <thead className="bg-gray-50">
-                                    <tr>
-                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Choice
-                                      </th>
-                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Text
-                                      </th>
-                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
-                                      </th>
-                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Graphics
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-200">
-                                    {question.choices.map((choice, choiceIndex) => (
-                                      <tr key={choice.id} className="hover:bg-gray-50">
-                                        <td className="px-3 py-2 text-sm text-gray-500">
-                                          {choiceIndex + 1}
-                                        </td>
-                                        <td className="px-3 py-2 text-sm text-gray-900">
-                                          {choice.text}
-                                        </td>
-                                        <td className="px-3 py-2">
-                                          {choice.is_correct ? (
-                                            <Badge variant="default" className="text-xs">
-                                              <CheckCircle className="h-3 w-3 mr-1" />
-                                              Correct
-                                            </Badge>
-                                          ) : (
-                                            <Badge variant="secondary" className="text-xs">
-                                              <XCircle className="h-3 w-3 mr-1" />
-                                              Incorrect
-                                            </Badge>
-                                          )}
-                                        </td>
-                                        <td className="px-3 py-2">
-                                          {choice.graphics ? (
-                                            <div className="flex items-center gap-2">
-                                              <Badge variant="default" className="text-xs">Yes</Badge>
-                                              <img 
-                                                src={choice.graphics} 
-                                                alt="Choice graphic" 
-                                                className="w-8 h-8 object-cover rounded border"
-                                              />
-                                            </div>
-                                          ) : (
-                                            <Badge variant="secondary" className="text-xs">No</Badge>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
+        {/* All Questions Expanded */}
+        <div className="space-y-4">
+          {examData.questions.map((question, index) => (
+            <Card key={question.id} className="shadow-md rounded-2xl">
+              <CardContent>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-800">{index + 1}. {question.text}</h3>
+                    <p className="text-sm text-gray-500 mt-1">Marks: {question.marks}</p>
+                    {question.graphics && (
+                      <img src={question.graphics} alt="Question graphic" className="max-w-md mt-2 rounded border" />
                     )}
-                  </>
-                ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  </div>
+                  <div className="flex flex-col gap-2 ml-4">
+                    <Button size="sm" variant="outline" onClick={() => handleEditQuestion(question.id)}>
+                      <Edit size={14} /> Edit
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDeleteQuestion(question.id)}>
+                      <Trash2 size={14} /> Delete
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Choices */}
+                <div className="mt-4 space-y-2">
+                  {question.choices.length > 0 ? (
+                    question.choices.map((choice, idx) => (
+                      <div key={choice.id} className="flex justify-between items-center p-2 border rounded bg-gray-50">
+                        <div className="flex items-center gap-2">
+                          {choice.graphics && <img src={choice.graphics} className="w-8 h-8 rounded" />}
+                          <span>{choice.text}</span>
+                          {choice.is_correct && <Badge variant="default" className="ml-2">Correct</Badge>}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleEditChoice(choice.id)}>
+                            <Edit size={12} />
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteChoice(choice.id)}>
+                            <Trash2 size={12} />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">No choices available for this question.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
