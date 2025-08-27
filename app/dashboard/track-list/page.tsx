@@ -327,6 +327,7 @@ export default function ExamsPage() {
     // Check if we're on the client side
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('id_track', row.id.toString());
+      sessionStorage.setItem('selected_track', JSON.stringify(row));
       sessionStorage.setItem('has_university', row.has_university.toString());
       router.push('/dashboard/track-list/track');
     }

@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-  import { BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, GraduationCap } from "lucide-react";
 
 const allCategories = [
   {
     key: "/dashboard/track-list/track/subject-list",
     name: "Subject Management",
     subCount: 4,
-    description: "Access and update all subjects associated with this track.",
+    description: "Manage subjects and related data in this track.",
     color: "bg-violet-500",
     icon: <BookOpen />,
     code: "GD",
@@ -24,7 +24,7 @@ const allCategories = [
     key: "university",
     name: " University Management",
     subCount: 5,
-    description: "Access and update all universities associated with this track",
+    description: "Manage universities associated with this track",
     color: "bg-yellow-400",
     icon: <GraduationCap />,
     code: "WD",
@@ -40,6 +40,8 @@ const allCategories = [
 
 export default function TrackCategoryPage() {
   const [categories, setCategories] = useState(allCategories);
+  const [track, setTrack] = useState<any | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -49,13 +51,64 @@ export default function TrackCategoryPage() {
           ? allCategories
           : allCategories.filter((cat) => cat.key !== "university")
       );
+      const selectedTrack = sessionStorage.getItem("selected_track");
+
+      if (selectedTrack) {
+        try {
+          setTrack(JSON.parse(selectedTrack));
+        } catch (e) {
+          console.warn("Failed to parse selected_track", e);
+        }
+      }
+
     }
   }, []);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
-      <h1 className="text-xl font-bold mb-1"></h1>
-      {/* <p className="text-gray-500 mb-6 text-sm">You have total {categories.length} Categories</p> */}
+      
+      <div className="w-full rounded-2xl shadow-md overflow-hidden bg-white border">
+      <div className="flex flex-col md:flex-row">
+        {/* Left Image */}
+        <div className="w-full md:w-60 h-48 md:h-auto">
+          <img
+            src={track?.thumbnail}
+            alt={track?.name}
+            className="object-cover w-full h-full"
+          />
+        </div>
+
+        {/* Right Content */}
+        <div className="p-6 flex flex-col justify-start flex-1">
+          <h5 className="text-2xl font-bold text-gray-900">{track?.name}</h5>
+
+          {/* Description */}
+          <div
+            className={`text-base text-gray-600 mt-3 leading-relaxed transition-all duration-300 ${
+              expanded ? "line-clamp-none" : "line-clamp-1"
+            }`}
+            dangerouslySetInnerHTML={{ __html: track?.description || "" }}
+          />
+
+          {/* Toggle Button */}
+          {track?.description && (
+            <button
+              className="text-sm text-blue-600 mt-2 hover:underline self-start"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? "See less" : "See more"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <br /> <br />
+
+
+
+
+      
       <div className="flex flex-wrap gap-4">
         {categories.map((cat) => (
           <Link
@@ -66,7 +119,7 @@ export default function TrackCategoryPage() {
             <div className="flex flex-col h-full">
               <div className="flex flex-row items-start bg-white   border border-slate-200 shadow-sm  transition p-6 h-full">
                 {/* Icon */}
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white text-lg font-bold text-lg bg-[#1A4D2E] mr-4 mt-1`}><span className="text-2xl text-white">{cat.icon}</span></div>
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white text-lg font-bold text-lg bg-[#1A4D2E] mr-4 mt-1`}><span className="text-2xl text-white">{cat.icon}</span></div>
                 {/* Main content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
