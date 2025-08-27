@@ -368,7 +368,7 @@ export default function ExamsPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-bold">Tracks</h1>
           <button
@@ -389,8 +389,9 @@ export default function ExamsPage() {
             />
 
           </div>
-          <div className="overflow-x-auto bg-white rounded-lg shadow">
-            <table className="min-w-full border-grey-800 border-2 text-sm">
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="w-full border-grey-800 border-2 text-sm table-auto">
+
               <thead className="">
                 <tr>
                   <th className="p-3">#</th>
@@ -401,7 +402,7 @@ export default function ExamsPage() {
                   <th className="p-3 text-left">Created By</th>
                   <th className="p-3 text-left">Last Modified</th>
                   <th className="p-3 text-left">Modified By</th>
-                  <th className="p-3"></th>
+                  <th className="p-3">Actions</th>
                 </tr>
               </thead>
               <tbody className='border-grey-800 text-xs border-2'>
