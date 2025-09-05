@@ -29,7 +29,7 @@ const categories = [
 // by  chapter / grand test
 export default function TrackCategoryPage() {
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
+    <>
       {/* <h1 className="text-xl font-bold mb-6">Grand Test</h1> */}
       {/* <p className="text-gray-500 mb-6 text-sm">You have total {categories.length} Categories</p> */}
       <div className="flex flex-wrap gap-4">
@@ -66,8 +66,6 @@ export default function TrackCategoryPage() {
           </Link>
         ))}
       </div>
-
-      
-    </div>
+    </>
   );
 }

@@ -388,6 +388,19 @@ export default function ChaptersPage() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
+      {/* <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> */}
+        {/* Header */}
+        <div className="max-w-sm p-4 rounded-2xl shadow-md bg-white border border-gray-200 mb-6">
+        <p className="text-sm font-medium">
+          <span className="font-medium text-gray-700">Track:</span>{" "}
+            {sessionStorage.getItem("track_name")}
+        </p>
+        <p className="text-sm mt-2 font-medium">
+          <span className="font-medium text-gray-700">Subject:</span>{" "}
+            {sessionStorage.getItem("subject_name")}
+        </p>
+      </div>
+      {/* </div> */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Chapters</h1>
         <p className="text-gray-600">Manage chapters for this subject</p>

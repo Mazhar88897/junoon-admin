@@ -327,6 +327,8 @@ export default function ExamsPage() {
     // Check if we're on the client side
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('id_track', row.id.toString());
+      sessionStorage.setItem('track_name', row.name);
+    
       sessionStorage.setItem('has_university', row.has_university.toString());
       router.push('/dashboard/track-list/track');
     }
@@ -394,6 +396,7 @@ export default function ExamsPage() {
               <th className="p-3 text-left">Name</th>
               <th className="p-3 text-left">Description</th>
               <th className="p-3 text-left">Price</th>
+              <th className="p-3 text-left">Has University</th>
             
               <th className="p-3 text-left">Created On</th>
               <th className="p-3 text-left">Last Modified</th>
@@ -430,7 +433,7 @@ export default function ExamsPage() {
                   />
                 </td>
                 <td className="p-3">{parseFloat(row.price).toLocaleString()} PKR</td>
-               
+                <td className={`p-3 ${row.has_university ? 'text-green-500' : 'text-red-500'}`}>{row.has_university ? 'Yes' : 'No'}</td>  
                 <td className="p-3">{new Date(row.created_on).toLocaleDateString()}</td>
                 <td className="p-3">{new Date(row.modified_on).toLocaleDateString()}</td>
                 <td className="p-3 text-right">

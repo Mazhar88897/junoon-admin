@@ -23,6 +23,16 @@ export default function TrackCategoryPage() {
   const router = useRouter();
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
+          <div className="max-w-sm p-4 rounded-2xl shadow-md bg-white border border-gray-200 mb-6">
+        <p className="text-sm font-medium">
+          <span className="font-medium text-gray-700">Track:</span>{" "}
+            {sessionStorage.getItem("track_name")}
+        </p>
+        <p className="text-sm mt-2 font-medium">
+          <span className="font-medium text-gray-700">Subject:</span>{" "}
+            {sessionStorage.getItem("subject_name")}
+        </p>
+      </div>
       <h1 className="text-xl font-bold mb-6">Grand Test</h1>
       {/* <p className="text-gray-500 mb-6 text-sm">You have total {categories.length} Categories</p> */}
       <div className="flex flex-wrap gap-4">

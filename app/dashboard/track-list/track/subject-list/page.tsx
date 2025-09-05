@@ -371,6 +371,13 @@ export default function SubjectsPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      <div className="max-w-sm p-4 rounded-2xl shadow-md bg-white border border-gray-200 mb-6">
+  <p className="text-sm ">
+    <span className="font-medium text-gray-700">Track:</span>{" "}
+    {sessionStorage.getItem("track_name")}
+  </p>
+</div>
+
       <h1 className="text-xl font-bold mb-6 flex items-center justify-between">
         <span>Subjects</span>
         <button

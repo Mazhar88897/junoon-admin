@@ -32,6 +32,10 @@ export default function AllChapterTestsPage() {
   const [page, setPage] = useState(1);
   const [subjectId, setSubjectId] = useState<string | null>(null);
   const [isPracticeExam, setIsPracticeExam] = useState<boolean>(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const pageSize = 10;
 
   useEffect(() => {
@@ -114,6 +118,97 @@ export default function AllChapterTestsPage() {
     router.push('/dashboard/track-list/track/subject-list/subject-cards/chapters/content/exam/test');
   };
 
+  const onFileChosen = (files: FileList) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const allowed = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/csv',
+      'application/csv'
+    ];
+    const nameAllowed = file.name.endsWith('.xlsx') || file.name.endsWith('.csv');
+    if (!allowed.includes(file.type) && !nameAllowed) {
+      setUploadError('Only .xlsx or .csv files are allowed');
+      setSelectedFile(null);
+      return;
+    }
+    setUploadError('');
+    setSelectedFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFileChosen(e.dataTransfer.files);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadError('Please select a file');
+      return;
+    }
+    if (!subjectId) {
+      setUploadError('Subject ID not found');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadError('');
+      const token = sessionStorage.getItem('Authorization');
+      const trackId = sessionStorage.getItem('id_track');
+      const chapterId = sessionStorage.getItem('chapter_id');
+      if (!token) throw new Error('No authorization token found');
+      if (!trackId) throw new Error('Track ID not found');
+      if (!chapterId) throw new Error('Chapter ID not found');
+
+      const form = new FormData();
+      form.append('file', selectedFile);
+      form.append('subject', subjectId);
+      form.append('track', trackId);
+      form.append('chapter', chapterId);
+      form.append('is_practice_exam', sessionStorage.getItem('is_practice_exam_chapter_test') || 'false');
+      form.append('exam_type', 'chapter');
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exams_app/track-exams/upload-excel/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+        },
+        body: form,
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || 'Failed to upload');
+      }
+
+      // Refresh list after successful upload
+      setIsUploadOpen(false);
+      setSelectedFile(null);
+      setIsUploading(false);
+      setSearch('');
+      setPage(1);
+      // re-fetch
+      setLoading(true);
+      setError('');
+      const tokenRefresh = sessionStorage.getItem('Authorization');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/exams_app/track_exams/chap-exam-by-subject/?subject_id=${subjectId}&is_practice_exam=${isPracticeExam}`,
+        { headers: { 'Authorization': tokenRefresh || '' } }
+      );
+      const data = await response.json();
+      setChapterExams(data);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
+      setLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -126,35 +221,18 @@ export default function AllChapterTestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading chapter exams...</p>
-          </div>
-        </div>
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading chapter exams...</p>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              <strong className="font-bold">Error: </strong>
-              <span className="block sm:inline">{error}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Don't return early on error - show the UI with error message
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
+    <div>
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -165,42 +243,67 @@ export default function AllChapterTestsPage() {
           </p>
         </div>
 
-        {/* Search and Create */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <div className="flex items-center justify-between">
+                <div>
+                  <strong className="font-bold">Error: </strong>
+                  <span className="block sm:inline">{error}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setError('');
+                    setLoading(true);
+                    // Re-trigger the fetch
+                    const id = sessionStorage.getItem('id_subject');
+                    const practiceFlag = sessionStorage.getItem('is_practice_exam_chapter_test');
+                    if (id) {
+                      setSubjectId(id);
+                      setIsPracticeExam(practiceFlag === 'true');
+                    }
+                  }}
+                  className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Search and Create/Upload Buttons */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1 max-w-md">
             <input
               type="text"
               placeholder="Search exams..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
             />
-            <svg
-              className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
           </div>
-          <button
-            onClick={handleCreateExam}
-            className="bg-green-900 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Create New Exam
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsUploadOpen(true)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            >
+              Upload Excel/CSV
+            </button>
+            <button
+              onClick={handleCreateExam}
+              className="px-6 py-2 bg-[#1A4D2E] text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            >
+              Create New Exam
+            </button>
+          </div>
         </div>
 
         {/* Results Count */}
         <div className="mb-4">
           <p className="text-gray-600">
-            Showing {filteredData.length} exam{filteredData.length !== 1 ? 's' : ''}
+            {error ? 'Unable to load exams' : `Showing ${filteredData.length} exam${filteredData.length !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -214,7 +317,7 @@ export default function AllChapterTestsPage() {
                   <th className="p-3 text-left">Title</th>
                   <th className="p-3 text-left">Description</th>
                   <th className="p-3 text-left">Total Marks</th>
-                  <th className="p-3 text-left">Type</th>
+                  {/* <th className="p-3 text-left">T   ype</th> */}
                   <th className="p-3 text-left">Last Modified</th>
                 </tr>
               </thead>
@@ -236,8 +339,12 @@ export default function AllChapterTestsPage() {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        <p className="text-lg font-medium">No exams found</p>
-                        <p className="text-sm">Create your first exam to get started</p>
+                        <p className="text-lg font-medium">
+                          {error ? 'Failed to load exams' : 'No exams found'}
+                        </p>
+                        <p className="text-sm">
+                          {error ? 'Please try again or create a new exam' : 'Create your first exam to get started'}
+                        </p>
                       </div>
                     </td>
                   </tr>
@@ -268,7 +375,7 @@ export default function AllChapterTestsPage() {
                           {exam.total_marks}
                         </div>
                       </td>
-                      <td className="p-3">
+                          {/* <td className="p-3">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           exam.is_practice_exam
                             ? 'bg-green-100 text-green-800'
@@ -276,7 +383,7 @@ export default function AllChapterTestsPage() {
                         }`}>
                           {exam.is_practice_exam ? 'Practice' : 'Regular'}
                         </span>
-                      </td>
+                      </td> */}
                       <td className="p-3 text-sm text-gray-500">
                         {formatDate(exam.modified_on)}
                       </td>
@@ -315,7 +422,34 @@ export default function AllChapterTestsPage() {
             </div>
           </div>
         )}
-      </div>
     </div>
+    {isUploadOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => { if (!isUploading) { setIsUploadOpen(false); setSelectedFile(null); setUploadError(''); } }}>
+        <div className="bg-white m-2 p-6 rounded shadow-lg w-full max-w-lg relative" onClick={(e) => e.stopPropagation()}>
+          <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={() => { if (!isUploading) { setIsUploadOpen(false); setSelectedFile(null); setUploadError(''); } }}>&times;</button>
+          <h3 className="text-lg font-semibold mb-4">Upload Chapter Test via Excel/CSV</h3>
+          <div
+            className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            onClick={() => document.getElementById('chapter-upload-input')?.click()}
+          >
+            <input id="chapter-upload-input" type="file" accept=".xlsx,.csv" className="hidden" onChange={(e) => { if (e.target.files) onFileChosen(e.target.files); }} />
+            <p className="text-sm text-gray-600">Drag and drop your .xlsx or .csv file here, or click to browse.</p>
+            {selectedFile && (
+              <p className="mt-3 text-gray-800 font-medium">Selected: {selectedFile?.name}</p>
+            )}
+          </div>
+          {uploadError && <div className="text-red-600 text-sm mt-3">{uploadError}</div>}
+          <div className="mt-6 flex justify-end gap-2">
+            <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md" onClick={() => { if (!isUploading) { setIsUploadOpen(false); setSelectedFile(null); setUploadError(''); } }}>Cancel</button>
+            <button disabled={isUploading} className={`px-4 py-2 ${isUploading ? 'bg-blue-300' : 'bg-blue-600'} text-white rounded-md`} onClick={handleUpload}>
+              {isUploading ? 'Creating…' : 'Create exam'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
