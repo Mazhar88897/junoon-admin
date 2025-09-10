@@ -606,7 +606,7 @@ export default function AdminExamReviewPage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    {section.name} ({section.questions.length} questions)
+                    {section.name} ({section.questions?.length || 0} questions)
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button
@@ -657,7 +657,7 @@ export default function AdminExamReviewPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {section.questions.map((question, index) => (
+                      {section.questions?.map((question, index) => (
                         <>
                           <tr key={question.id} className="hover:bg-gray-50">
                             <td className="px-4 py-3 text-sm font-medium text-gray-900 border-b border-gray-200">
@@ -689,7 +689,7 @@ export default function AdminExamReviewPage() {
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-200">
                               <Badge variant="outline" className="text-xs">
-                                {question.choices.length} choices
+                                {question.choices?.length || 0} choices
                               </Badge>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-200">
@@ -773,7 +773,7 @@ export default function AdminExamReviewPage() {
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-gray-200">
-                                        {question.choices.map((choice, choiceIndex) => (
+                                        {question.choices?.map((choice, choiceIndex) => (
                                           <tr key={choice.id} className="hover:bg-gray-50">
                                             <td className="px-3 py-2 text-sm text-gray-500">
                                               {choiceIndex + 1}

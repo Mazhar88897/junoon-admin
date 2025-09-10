@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { redirect, useRouter } from 'next/navigation';
 import React, { useEffect, useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
+import { useReactQuillCSS } from '@/hooks/useReactQuillCSS';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -58,6 +58,9 @@ export default function ExamsPage() {
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [trackToDelete, setTrackToDelete] = useState<Track | null>(null);
+  
+  // Load ReactQuill CSS only when needed
+  useReactQuillCSS();
   const [newTrackData, setNewTrackData] = useState({
     name: '',
     description: '',
