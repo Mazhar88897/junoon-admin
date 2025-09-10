@@ -220,7 +220,7 @@ export default function AllUniversityTestsPage() {
             <button
               onClick={() => {
                 const link = document.createElement('a');
-                link.href = '/Grand_Exam_Template.xlsx';
+                link.href = '/University_Exam_Template.xlsx';
                 link.download = 'University_Exam_Template.xlsx';
                 document.body.appendChild(link);
                 link.click();

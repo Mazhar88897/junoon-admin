@@ -39,18 +39,38 @@ const allCategories = [
 ];
 
 export default function TrackCategoryPage() {
-  const [categories, setCategories] = useState(allCategories);
+  const [categories, setCategories] = useState<typeof allCategories>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const hasUniversity = sessionStorage.getItem("has_university") === "true";
+      console.log("has_university:", sessionStorage.getItem("has_university"), "hasUniversity:", hasUniversity);
       setCategories(
         hasUniversity
           ? allCategories
-          : allCategories.filter((cat) => cat.key !== "university")
+          : allCategories.filter((cat) => cat.key !== "/dashboard/track-list/track/university")
       );
+      setIsLoading(false);
     }
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 bg-slate-50 min-h-screen">
+        <div className="max-w-sm p-4 rounded-2xl shadow-md bg-white border border-gray-200 mb-6">
+          <p className="text-sm font-medium">
+            <span className="font-medium text-gray-700">Track:</span>{" "}
+            {sessionStorage.getItem("track_name")}
+          </p>
+        </div>
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
