@@ -887,7 +887,9 @@ export default function AllGrandTestsPage() {
 
         )}
 
+          </table>
 
+        </div>
 
           </>
 
@@ -960,8 +962,6 @@ export default function AllGrandTestsPage() {
               )}
 
             </div>
-
-          )
 
         )}
 
