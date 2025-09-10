@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { redirect, useRouter } from 'next/navigation';
 import React, { useEffect, useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { useReactQuillCSS } from '@/hooks/useReactQuillCSS';
+
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
