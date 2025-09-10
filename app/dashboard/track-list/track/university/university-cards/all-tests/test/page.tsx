@@ -88,6 +88,7 @@ export default function AdminExamReviewPage() {
 
   const refetchExamData = async () => {
     try {
+      if (typeof window === 'undefined') return;
       const token = sessionStorage.getItem('Authorization');
       if (!token) throw new Error('No authorization token found. Please login again.');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -110,6 +111,12 @@ export default function AdminExamReviewPage() {
       try {
         setLoading(true);
         
+        // Check if we're on the client side
+        if (typeof window === 'undefined') {
+          setLoading(false);
+          return;
+        }
+        
         // Get authorization token
         const token = sessionStorage.getItem('Authorization');
         if (!token) {
@@ -124,7 +131,7 @@ export default function AdminExamReviewPage() {
           throw new Error('No exam ID found in session storage.');
         }
 
-        const response = await fetch(`${baseUrl}/api/exams_app/university_exams/exam/${sessionStorage.getItem('exam_id_university')}`, {
+        const response = await fetch(`${baseUrl}/api/exams_app/university_exams/exam/${examId}`, {
           headers: {
             'Authorization': token,
             'Content-Type': 'application/json'
@@ -171,6 +178,7 @@ export default function AdminExamReviewPage() {
   const saveEditedQuestion = async () => {
     try {
       if (!editingQuestionId) return;
+      if (typeof window === 'undefined') return;
       const token = sessionStorage.getItem('Authorization');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!token || !baseUrl) throw new Error('Missing auth or base URL');
@@ -214,6 +222,7 @@ export default function AdminExamReviewPage() {
 
   const deleteQuestion = async (questionId: number) => {
     try {
+      if (typeof window === 'undefined') return;
       const token = sessionStorage.getItem('Authorization');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!token || !baseUrl) throw new Error('Missing auth or base URL');
@@ -246,6 +255,7 @@ export default function AdminExamReviewPage() {
   const saveEditedChoice = async () => {
     try {
       if (!editingChoiceId) return;
+      if (typeof window === 'undefined') return;
       const token = sessionStorage.getItem('Authorization');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!token || !baseUrl) throw new Error('Missing auth or base URL');
@@ -286,6 +296,7 @@ export default function AdminExamReviewPage() {
 
   const deleteChoice = async (choiceId: number) => {
     try {
+      if (typeof window === 'undefined') return;
       const token = sessionStorage.getItem('Authorization');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!token || !baseUrl) throw new Error('Missing auth or base URL');
@@ -335,6 +346,7 @@ export default function AdminExamReviewPage() {
   const handleSaveEdit = async () => {
     try {
       if (!examData) return;
+      if (typeof window === 'undefined') return;
       setIsSaving(true);
 
       const token = sessionStorage.getItem('Authorization');
@@ -391,6 +403,7 @@ export default function AdminExamReviewPage() {
   const saveEditedSection = async () => {
     try {
       if (!editingSectionId) return;
+      if (typeof window === 'undefined') return;
       const token = sessionStorage.getItem('Authorization');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!token || !baseUrl) throw new Error('Missing auth or base URL');
@@ -428,6 +441,7 @@ export default function AdminExamReviewPage() {
 
   const deleteSection = async (sectionId: number) => {
     try {
+      if (typeof window === 'undefined') return;
       const token = sessionStorage.getItem('Authorization');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!token || !baseUrl) throw new Error('Missing auth or base URL');
@@ -454,6 +468,7 @@ export default function AdminExamReviewPage() {
   const deleteExam = async () => {
     try {
       if (!examData) return;
+      if (typeof window === 'undefined') return;
       const token = sessionStorage.getItem('Authorization');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!token || !baseUrl) throw new Error('Missing auth or base URL');
@@ -574,17 +589,18 @@ export default function AdminExamReviewPage() {
           
           {/* Basic Info */}
           <div className="flex items-center gap-6 text-sm text-gray-600">
-            <span>Sections: {examData.sections.length}</span>
-            <span>Questions: {examData.sections.reduce((total, section) => total + section.questions.length, 0)}</span>
+            <span>Sections: {examData.sections?.length || 0}</span>
+            <span>Questions: {examData.sections?.reduce((total, section) => total + (section.questions?.length || 0), 0) || 0}</span>
             <span>Total Marks: {examData.total_marks}</span>
             <span>Type: {examData.exam_type}</span>
-            <span>Subject: {sessionStorage.getItem("subject_name")}</span>
+            <span>Subject: {typeof window !== 'undefined' ? sessionStorage.getItem("subject_name") : ''}</span>
           </div>
         </div>
 
         {/* Sections */}
         <div className="space-y-6">
-          {examData.sections.map((section, sectionIndex) => (
+          {examData.sections && examData.sections.length > 0 ? (
+            examData.sections.map((section, sectionIndex) => (
             <Card key={section.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -819,7 +835,16 @@ export default function AdminExamReviewPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ))
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center text-gray-500">
+                  <p>No sections available for this exam.</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
         <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)}>
           <div className="space-y-4">
