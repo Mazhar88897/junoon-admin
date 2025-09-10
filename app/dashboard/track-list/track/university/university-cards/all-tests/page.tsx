@@ -185,7 +185,7 @@ export default function AllUniversityTestsPage() {
       const tokenRefresh = sessionStorage.getItem('Authorization');
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/exams_app/university_exams/?university_id=${universityId}`,
-        { headers: { 'Authorization': tokenRefresh || '' } }
+        { headers: { 'Authorization': tokenRefresh ?? '' } }
       );
       const data = await response.json();
       setUniversityExams(data);
