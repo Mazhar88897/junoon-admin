@@ -151,11 +151,11 @@ export default function AllUniversityTestsPage() {
       
       if (!token) throw new Error('No authorization token found');
       if (!trackId) throw new Error('Track ID not found');
-      if (!subjectId) throw new Error('Subject ID not found');
+    //   if (!subjectId) throw new Error('Subject ID not found');
 
       const form = new FormData();
       form.append('file', selectedFile);
-      form.append('subject', subjectId);
+    //   form.append('subject', subjectId);
       form.append('track', trackId);
       form.append('university', universityId);
       form.append('exam_type', 'university');
