@@ -208,7 +208,7 @@ export default function AllGrandTestsPage() {
       const tokenRefresh = sessionStorage.getItem('Authorization');
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/exams_app/track_exams/grand-exam-by-subject/?subject_id=${subjectId}&is_practice_exam=${isPracticeExam}`,
-        { headers: { 'Authorization': tokenRefresh || '' } }
+        { headers: { 'Authorization': tokenRefresh ?? '' } }
       );
       const data = await response.json();
       setGrandExams(data);
@@ -288,12 +288,12 @@ export default function AllGrandTestsPage() {
         
         {/* Track and Subject Info */}
         <div className="max-w-sm p-4 rounded-2xl shadow-md bg-white border border-gray-200 mb-6">
-          <p className="text-sm font-medium">
-            <span className="font-medium text-gray-700">Track:</span>{" "}
+        <p className="text-sm font-medium">
+          <span className="font-medium text-gray-700">Track:</span>{" "}
             {sessionStorage.getItem("track_name")}
-          </p>
-          <p className="text-sm mt-2 font-medium">
-            <span className="font-medium text-gray-700">Subject:</span>{" "}
+        </p>
+        <p className="text-sm mt-2 font-medium">
+          <span className="font-medium text-gray-700">Subject:</span>{" "}
             {sessionStorage.getItem("subject_name")}
           </p>
         </div>
@@ -333,105 +333,105 @@ export default function AllGrandTestsPage() {
           <>
             <div className='border-grey-800 border-2 rounded-lg p-4'>
               <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <input
-                  type="text"
+            <input
+              type="text"
                   placeholder="Type in to Search"
                   className="border text-sm  focus:outline-none  px-3 py-2 rounded w-full sm:w-72"
-                  value={search}
-                  onChange={e => { setSearch(e.target.value); setPage(1); }}
-                />
-              </div>
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+            />
+            </div>
 
-              <div className="overflow-x-auto bg-white rounded-lg shadow">
-                <table className="min-w-full border-grey-800 border-2 text-sm">
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <table className="min-w-full border-grey-800 border-2 text-sm">
                   <thead className="">
-                    <tr>
-                      <th className="p-3">#</th>
-                      <th className="p-3 text-left">Thumbnail</th>
-                      <th className="p-3 text-left">Title</th>
-                      <th className="p-3 text-left">Description</th>
-                      <th className="p-3 text-left">Total Marks</th>
-                      <th className="p-3 text-left">Created By</th>
-                      <th className="p-3 text-left">Created On</th>
-                    </tr>
-                  </thead>
-                  <tbody className='border-grey-800 text-xs border-2'>
-                    {pagedData.map((row, i) => (
-                      <tr
-                        key={row.id}
-                        className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
-                        onClick={() => {sessionStorage.setItem("exam_id_grand_test", row.id.toString());
-                          handleRowClick(row); }}
-                      >
-                        <td className="p-3 font-semibold text-slate-800">
-                          {(page - 1) * pageSize + i + 1}
-                        </td>
-                        <td className="p-3">
-                          {row.thumbnail ? (
-                            <img 
-                              src={row.thumbnail} 
-                              alt={row.title} 
-                              className="w-10 h-10 object-cover rounded" 
-                            />
-                          ) : (
+              <tr>
+                <th className="p-3">#</th>
+                <th className="p-3 text-left">Thumbnail</th>
+                <th className="p-3 text-left">Title</th>
+                <th className="p-3 text-left">Description</th>
+                <th className="p-3 text-left">Total Marks</th>
+                                 <th className="p-3 text-left">Created By</th>
+                 <th className="p-3 text-left">Created On</th>
+              </tr>
+            </thead>
+            <tbody className='border-grey-800 text-xs border-2'>
+              {pagedData.map((row, i) => (
+                <tr
+                  key={row.id}
+                  className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
+                  onClick={() => {sessionStorage.setItem("exam_id_grand_test", row.id.toString());
+                    handleRowClick(row); }}
+                >
+                  <td className="p-3 font-semibold text-slate-800">
+                    {(page - 1) * pageSize + i + 1}
+                  </td>
+                  <td className="p-3">
+                    {row.thumbnail ? (
+                      <img 
+                        src={row.thumbnail} 
+                        alt={row.title} 
+                        className="w-10 h-10 object-cover rounded" 
+                      />
+                    ) : (
                             <div className="w-8 h-8 bg-gray-100 flex items-center fext-xs justify-center rounded text-gray-400">Null</div>
-                          )}
-                        </td>
+                    )}
+                  </td>
                         <td className="p-3 font-bold ">
                           <div>{row.title}
                             <div className='text-xs text-slate-600'>{row.created_by}</div>
                           </div>
-                        </td>
-                        <td className="p-3 text-gray-700 max-w-xs text-slate-600 truncate" 
-                             title={row.description}>
-                          <div
-                            className="line-clamp-2"
-                            dangerouslySetInnerHTML={{ __html: row.description }}
-                          />
-                        </td>
-                        <td className="p-3 text-slate-600">
-                          {row.total_marks}
-                        </td>
-                        <td className="p-3 text-slate-600">
-                          {row.created_by}
-                        </td>
-                        <td className="p-3 text-slate-600">
-                          {formatDate(row.created_on)}
-                        </td>
-                      </tr>
-                    ))}
+                  </td>
+                  <td className="p-3 text-gray-700 max-w-xs text-slate-600 truncate" 
+                       title={row.description}>
+                    <div
+                      className="line-clamp-2"
+                      dangerouslySetInnerHTML={{ __html: row.description }}
+                    />
+                  </td>
+                  <td className="p-3 text-slate-600">
+                    {row.total_marks}
+                  </td>
+                  <td className="p-3 text-slate-600">
+                    {row.created_by}
+                  </td>
+                                     <td className="p-3 text-slate-600">
+                     {formatDate(row.created_on)}
+                   </td>
+                </tr>
+              ))}
                     {pagedData.length === 0 && (
                       <tr><td colSpan={7} className="text-center p-6 text-gray-400">No data found.</td></tr>
                     )}
-                  </tbody>
-                </table>
-              </div>
+            </tbody>
+          </table>
+        </div>
 
-              {/* Pagination */}
+        {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <div className="flex">
-                  <button
+              <button
                     className={`px-2  text-xs border ${page === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-gray-50'}`}
                     onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
+                disabled={page === 1}
                   >Prev</button>
                   {[...Array(pageCount)].map((_, idx) => (
-                    <button
+                <button
                       key={idx}
                       className={`px-2 py-1  text-xs  border ${page === idx + 1 ? 'bg-[#6d7efc] text-white' : 'bg-white hover:bg-gray-50'}`}
                       onClick={() => setPage(idx + 1)}
                     >{idx + 1}</button>
                   ))}
-                  <button
+              <button
                     className={`px-2 text-xs  border ${page === pageCount || pageCount === 0 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-purple1050'}`}
                     onClick={() => setPage(p => Math.min(pageCount, p + 1))}
                     disabled={page === pageCount || pageCount === 0}
                   >Next</button>
-                </div>
+          </div>
                 <div className="text-xs text-gray-500">
                   {pagedData.length > 0 && (
                     <span>{(page - 1) * pageSize + 1}-{(page - 1) * pageSize + pagedData.length} of {filteredData.length}</span>
-                  )}
+        )}
                 </div>
               </div>
             </div>
@@ -473,7 +473,7 @@ export default function AllGrandTestsPage() {
             </div>
           )
         )}
-      </div>
+    </div>
     {isUploadOpen && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => { if (!isUploading) { setIsUploadOpen(false); setSelectedFile(null); setUploadError(''); } }}>
         <div className="bg-white m-2 p-6 rounded shadow-lg w-full max-w-lg relative" onClick={(e) => e.stopPropagation()}>
@@ -504,3 +504,529 @@ export default function AllGrandTestsPage() {
     </>
   );
 }
+
+        {/* Error Message */}
+
+        {error && (
+
+          <div className="mb-6">
+
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <strong className="font-bold">Error: </strong>
+
+                  <span className="block sm:inline">{error}</span>
+
+                </div>
+
+                <button
+
+                  onClick={() => {
+
+                    setError('');
+
+                    setLoading(true);
+
+                    // Re-trigger the fetch
+
+                    const id = sessionStorage.getItem('id_subject');
+
+                    const practiceFlag = sessionStorage.getItem('is_practice_exam_grand_test');
+
+                    if (id) {
+
+                      setSubjectId(id);
+
+                      setIsPracticeExam(practiceFlag === 'true');
+
+                    }
+
+                  }}
+
+                  className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+
+                >
+
+                  Retry
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+
+
+        {/* Search and Create/Upload Buttons */}
+
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+          <div className="flex-1 max-w-md">
+
+            <input
+
+              type="text"
+
+              placeholder="Search exams..."
+
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
+              value={search}
+
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+
+            />
+
+          </div>
+
+          <div className="flex gap-2">
+
+            <button
+
+              onClick={() => {
+
+                const link = document.createElement('a');
+
+                link.href = '/Grand_Exam_Template.xlsx';
+
+                link.download = 'Grand_Exam_Template.xlsx';
+
+                document.body.appendChild(link);
+
+                link.click();
+
+                document.body.removeChild(link);
+
+              }}
+
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
+
+              title="Download Excel Template"
+
+            >
+
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+
+              </svg>
+
+            
+
+            </button>
+
+            <button
+
+              onClick={() => setIsUploadOpen(true)}
+
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+
+            >
+
+              Upload Excel/CSV
+
+            </button>
+
+            <button
+
+              onClick={handleCreateExam}
+
+              className="px-6 py-2 bg-[#1A4D2E] text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+
+            >
+
+              Create {isPracticeExam ? 'Practice' : ''} Grand Test
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+
+        {/* Results Count and Table */}
+
+        {filteredData.length > 0 ? (
+
+          <>
+
+            {/* Results Count */}
+
+            <div className="mb-4 text-sm text-gray-600">
+
+              {error ? 'Unable to load exams' : `${filteredData.length} exam${filteredData.length !== 1 ? 's' : ''} found`}
+
+            </div>
+
+
+
+        {/* Grand Exams Table */}
+
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+
+          <table className="min-w-full border-grey-800 border-2 text-sm">
+
+            <thead>
+
+              <tr>
+
+                <th className="p-3">#</th>
+
+                <th className="p-3 text-left">Thumbnail</th>
+
+                <th className="p-3 text-left">Title</th>
+
+                <th className="p-3 text-left">Description</th>
+
+                <th className="p-3 text-left">Total Marks</th>
+
+                {/* <th className="p-3 text-left">Practice</th> */}
+
+                                 <th className="p-3 text-left">Created By</th>
+
+                 <th className="p-3 text-left">Created On</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody className='border-grey-800 text-xs border-2'>
+
+              {pagedData.map((row, i) => (
+
+                <tr
+
+                  key={row.id}
+
+                  className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
+
+                  onClick={() => {sessionStorage.setItem("exam_id_grand_test", row.id.toString());
+
+                    handleRowClick(row); }}
+
+                >
+
+                  <td className="p-3 font-semibold text-slate-800">
+
+                    {(page - 1) * pageSize + i + 1}
+
+                  </td>
+
+                  <td className="p-3">
+
+                    {row.thumbnail ? (
+
+                      <img 
+
+                        src={row.thumbnail} 
+
+                        alt={row.title} 
+
+                        className="w-10 h-10 object-cover rounded" 
+
+                      />
+
+                    ) : (
+
+                      <div className="w-10 h-10 bg-gray-100 flex items-center justify-center rounded text-gray-400">
+
+                        N
+
+                      </div>
+
+                    )}
+
+                  </td>
+
+                  <td className="p-3 font-bold text-slate-800">
+
+                    {row.title}
+
+                  </td>
+
+                  <td className="p-3 text-gray-700 max-w-xs text-slate-600 truncate" 
+
+                       title={row.description}>
+
+                    <div
+
+                      className="line-clamp-2"
+
+                      dangerouslySetInnerHTML={{ __html: row.description }}
+
+                    />
+
+                  </td>
+
+                  <td className="p-3 text-slate-600">
+
+                    {row.total_marks}
+
+                  </td>
+
+                  {/* <td className="p-3">
+
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+
+                      row.is_practice_exam 
+
+                        ? 'bg-green-100 text-green-800' 
+
+                        : 'bg-blue-100 text-blue-800'
+
+                    }`}>
+
+                      {row.is_practice_exam ? 'Practice' : 'Official'}
+
+                    </span>
+
+                  </td> */}
+
+                  <td className="p-3 text-slate-600">
+
+                    {row.created_by}
+
+                  </td>
+
+                                     <td className="p-3 text-slate-600">
+
+                     {formatDate(row.created_on)}
+
+                   </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+
+        {/* Pagination */}
+
+        {pageCount > 1 && (
+
+          <div className="flex justify-center mt-6">
+
+            <nav className="flex items-center space-x-2">
+
+              <button
+
+                onClick={() => setPage(Math.max(1, page - 1))}
+
+                disabled={page === 1}
+
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+
+              >
+
+                Previous
+
+              </button>
+
+              
+
+              {Array.from({ length: pageCount }, (_, i) => i + 1).map((pageNum) => (
+
+                <button
+
+                  key={pageNum}
+
+                  onClick={() => setPage(pageNum)}
+
+                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+
+                    pageNum === page
+
+                      ? 'bg-blue-600 text-white'
+
+                      : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+
+                  }`}
+
+                >
+
+                  {pageNum}
+
+                </button>
+
+              ))}
+
+              
+
+              <button
+
+                onClick={() => setPage(Math.min(pageCount, page + 1))}
+
+                disabled={page === pageCount}
+
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+
+              >
+
+                Next
+
+              </button>
+
+            </nav>
+
+          </div>
+
+        )}
+
+
+
+          </>
+
+        ) : (
+
+          /* Empty State - Show when no exams and not loading */
+
+          !loading && (
+
+            <div className="text-center py-12">
+
+              <div className="text-gray-400 mb-4">
+
+                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+
+                </svg>
+
+              </div>
+
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+
+                {error ? 'Failed to load exams' : 'No exams found'}
+
+              </h3>
+
+              <p className="text-gray-500 mb-4">
+
+                {error 
+
+                  ? 'Please try again or create a new exam' 
+
+                  : search 
+
+                    ? 'Try adjusting your search terms.' 
+
+                    : 'Get started by creating your first exam.'
+
+                }
+
+              </p>
+
+              {!search && (
+
+                <><button className="text-green-800">
+
+                    <Link href="/dashboard/track-list/track/subject-list/subject-cards/grand-test/test">
+
+                      Upload Excel
+
+                    </Link>
+
+
+
+                  </button>
+
+                  <button
+
+                    onClick={handleCreateExam}
+
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+
+                  >
+
+                      Create {isPracticeExam ? 'Practice' : ''} Grand Test
+
+                    </button></>
+
+              )}
+
+            </div>
+
+          )
+
+        )}
+
+      </div>
+
+    </div>
+
+    {isUploadOpen && (
+
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => { if (!isUploading) { setIsUploadOpen(false); setSelectedFile(null); setUploadError(''); } }}>
+
+        <div className="bg-white m-2 p-6 rounded shadow-lg w-full max-w-lg relative" onClick={(e) => e.stopPropagation()}>
+
+          <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={() => { if (!isUploading) { setIsUploadOpen(false); setSelectedFile(null); setUploadError(''); } }}>&times;</button>
+
+          <h3 className="text-lg font-semibold mb-4">Upload Grand Test via Excel/CSV</h3>
+
+          <div
+
+            className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50"
+
+            onDragOver={(e) => e.preventDefault()}
+
+            onDrop={handleDrop}
+
+            onClick={() => document.getElementById('grand-upload-input')?.click()}
+
+          >
+
+            <input id="grand-upload-input" type="file" accept=".xlsx,.csv" className="hidden" onChange={(e) => { if (e.target.files) onFileChosen(e.target.files); }} />
+
+            <p className="text-sm text-gray-600">Drag and drop your .xlsx or .csv file here, or click to browse.</p>
+
+            {selectedFile && (
+
+              <p className="mt-3 text-gray-800 font-medium">Selected: {selectedFile?.name}</p>
+
+            )}
+
+          </div>
+
+          {uploadError && <div className="text-red-600 text-sm mt-3">{uploadError}</div>}
+
+          <div className="mt-6 flex justify-end gap-2">
+
+            <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md" onClick={() => { if (!isUploading) { setIsUploadOpen(false); setSelectedFile(null); setUploadError(''); } }}>Cancel</button>
+
+            <button disabled={isUploading} className={`px-4 py-2 ${isUploading ? 'bg-blue-300' : 'bg-blue-600'} text-white rounded-md`} onClick={handleUpload}>
+
+              {isUploading ? 'Creating…' : 'Create exam'}
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    )}
+
+    </>
+
+  );
+
+}
+
+

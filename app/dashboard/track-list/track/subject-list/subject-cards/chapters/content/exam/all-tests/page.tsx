@@ -197,7 +197,7 @@ export default function AllChapterTestsPage() {
       const tokenRefresh = sessionStorage.getItem('Authorization');
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/exams_app/track_exams/chap-exam-by-subject/?subject_id=${subjectId}&is_practice_exam=${isPracticeExam}`,
-        { headers: { 'Authorization': tokenRefresh || '' } }
+        { headers: { 'Authorization': tokenRefresh ?? '' } }
       );
       const data = await response.json();
       setChapterExams(data);

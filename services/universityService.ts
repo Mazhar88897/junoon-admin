@@ -30,14 +30,14 @@ export interface UpdateUniversityData {
 }
 
 class UniversityService {
-  private getAuthHeaders() {
+  private getAuthHeaders(): Record<string, string> {
     if (typeof window === 'undefined') {
       return {};
     }
     
     const token = sessionStorage.getItem('Authorization');
     return {
-      'Authorization': token || '',
+      'Authorization': token ?? '',
     };
   }
 
