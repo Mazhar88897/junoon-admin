@@ -3,6 +3,17 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// Add custom CSS for line clamping
+const customStyles = `
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
 interface GrandExam {
   id: number;
   is_deleted: boolean;
@@ -236,29 +247,54 @@ export default function AllGrandTestsPage() {
 
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="max-w-sm p-4 rounded-2xl shadow-md bg-white border border-gray-200 mb-6">
-        <p className="text-sm font-medium">
-          <span className="font-medium text-gray-700">Track:</span>{" "}
-            {sessionStorage.getItem("track_name")}
-        </p>
-        <p className="text-sm mt-2 font-medium">
-          <span className="font-medium text-gray-700">Subject:</span>{" "}
-            {sessionStorage.getItem("subject_name")}
-        </p>
-      </div>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <style dangerouslySetInnerHTML={{ __html: customStyles }} />
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-bold">
             {isPracticeExam ? 'Practice Grand Tests' : 'Grand Tests'}
           </h1>
-          <p className="text-gray-600">
-            {isPracticeExam 
-              ? 'Practice exams to test your knowledge and prepare for the real test'
-              : 'Official grand tests for this subject'
-            }
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/Grand_Exam_Template.xlsx';
+                link.download = 'Grand_Exam_Template.xlsx';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
+              title="Download Excel Template"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download Template
+            </button>
+            <button
+              onClick={() => setIsUploadOpen(true)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            >
+              Upload Excel/CSV
+            </button>
+            <button
+              onClick={handleCreateExam}
+              className="bg-[#1A4D2E] hover:bg-[#1A4D2E] text-white font-bold TEXT-SM py-1 px-4 rounded"
+            >
+              Create {isPracticeExam ? 'Practice' : ''} Grand Test
+            </button>
+          </div>
+        </div>
+        
+        {/* Track and Subject Info */}
+        <div className="max-w-sm p-4 rounded-2xl shadow-md bg-white border border-gray-200 mb-6">
+          <p className="text-sm font-medium">
+            <span className="font-medium text-gray-700">Track:</span>{" "}
+            {sessionStorage.getItem("track_name")}
+          </p>
+          <p className="text-sm mt-2 font-medium">
+            <span className="font-medium text-gray-700">Subject:</span>{" "}
+            {sessionStorage.getItem("subject_name")}
           </p>
         </div>
 
@@ -292,168 +328,113 @@ export default function AllGrandTestsPage() {
           </div>
         )}
 
-        {/* Search and Create/Upload Buttons */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="Search exams..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); }}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = '/Grand_Exam_Template.xlsx';
-                link.download = 'Grand_Exam_Template.xlsx';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
-              title="Download Excel Template"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            
-            </button>
-            <button
-              onClick={() => setIsUploadOpen(true)}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            >
-              Upload Excel/CSV
-            </button>
-            <button
-              onClick={handleCreateExam}
-              className="px-6 py-2 bg-[#1A4D2E] text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            >
-              Create {isPracticeExam ? 'Practice' : ''} Grand Test
-            </button>
-          </div>
-        </div>
-
         {/* Results Count and Table */}
         {filteredData.length > 0 ? (
           <>
-            {/* Results Count */}
-            <div className="mb-4 text-sm text-gray-600">
-              {error ? 'Unable to load exams' : `${filteredData.length} exam${filteredData.length !== 1 ? 's' : ''} found`}
-            </div>
+            <div className='border-grey-800 border-2 rounded-lg p-4'>
+              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <input
+                  type="text"
+                  placeholder="Type in to Search"
+                  className="border text-sm  focus:outline-none  px-3 py-2 rounded w-full sm:w-72"
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); setPage(1); }}
+                />
+              </div>
 
-        {/* Grand Exams Table */}
-        <div className="overflow-x-auto bg-white rounded-lg shadow">
-          <table className="min-w-full border-grey-800 border-2 text-sm">
-            <thead>
-              <tr>
-                <th className="p-3">#</th>
-                <th className="p-3 text-left">Thumbnail</th>
-                <th className="p-3 text-left">Title</th>
-                <th className="p-3 text-left">Description</th>
-                <th className="p-3 text-left">Total Marks</th>
-                {/* <th className="p-3 text-left">Practice</th> */}
-                                 <th className="p-3 text-left">Created By</th>
-                 <th className="p-3 text-left">Created On</th>
-              </tr>
-            </thead>
-            <tbody className='border-grey-800 text-xs border-2'>
-              {pagedData.map((row, i) => (
-                <tr
-                  key={row.id}
-                  className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
-                  onClick={() => {sessionStorage.setItem("exam_id_grand_test", row.id.toString());
-                    handleRowClick(row); }}
-                >
-                  <td className="p-3 font-semibold text-slate-800">
-                    {(page - 1) * pageSize + i + 1}
-                  </td>
-                  <td className="p-3">
-                    {row.thumbnail ? (
-                      <img 
-                        src={row.thumbnail} 
-                        alt={row.title} 
-                        className="w-10 h-10 object-cover rounded" 
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-gray-100 flex items-center justify-center rounded text-gray-400">
-                        N
-                      </div>
+              <div className="overflow-x-auto bg-white rounded-lg shadow">
+                <table className="min-w-full border-grey-800 border-2 text-sm">
+                  <thead className="">
+                    <tr>
+                      <th className="p-3">#</th>
+                      <th className="p-3 text-left">Thumbnail</th>
+                      <th className="p-3 text-left">Title</th>
+                      <th className="p-3 text-left">Description</th>
+                      <th className="p-3 text-left">Total Marks</th>
+                      <th className="p-3 text-left">Created By</th>
+                      <th className="p-3 text-left">Created On</th>
+                    </tr>
+                  </thead>
+                  <tbody className='border-grey-800 text-xs border-2'>
+                    {pagedData.map((row, i) => (
+                      <tr
+                        key={row.id}
+                        className="border-t border-grey-800 border-2 hover:bg-blue-50 cursor-pointer transition"
+                        onClick={() => {sessionStorage.setItem("exam_id_grand_test", row.id.toString());
+                          handleRowClick(row); }}
+                      >
+                        <td className="p-3 font-semibold text-slate-800">
+                          {(page - 1) * pageSize + i + 1}
+                        </td>
+                        <td className="p-3">
+                          {row.thumbnail ? (
+                            <img 
+                              src={row.thumbnail} 
+                              alt={row.title} 
+                              className="w-10 h-10 object-cover rounded" 
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-100 flex items-center fext-xs justify-center rounded text-gray-400">Null</div>
+                          )}
+                        </td>
+                        <td className="p-3 font-bold ">
+                          <div>{row.title}
+                            <div className='text-xs text-slate-600'>{row.created_by}</div>
+                          </div>
+                        </td>
+                        <td className="p-3 text-gray-700 max-w-xs text-slate-600 truncate" 
+                             title={row.description}>
+                          <div
+                            className="line-clamp-2"
+                            dangerouslySetInnerHTML={{ __html: row.description }}
+                          />
+                        </td>
+                        <td className="p-3 text-slate-600">
+                          {row.total_marks}
+                        </td>
+                        <td className="p-3 text-slate-600">
+                          {row.created_by}
+                        </td>
+                        <td className="p-3 text-slate-600">
+                          {formatDate(row.created_on)}
+                        </td>
+                      </tr>
+                    ))}
+                    {pagedData.length === 0 && (
+                      <tr><td colSpan={7} className="text-center p-6 text-gray-400">No data found.</td></tr>
                     )}
-                  </td>
-                  <td className="p-3 font-bold text-slate-800">
-                    {row.title}
-                  </td>
-                  <td className="p-3 text-gray-700 max-w-xs text-slate-600 truncate" 
-                       title={row.description}>
-                    <div
-                      className="line-clamp-2"
-                      dangerouslySetInnerHTML={{ __html: row.description }}
-                    />
-                  </td>
-                  <td className="p-3 text-slate-600">
-                    {row.total_marks}
-                  </td>
-                  {/* <td className="p-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      row.is_practice_exam 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {row.is_practice_exam ? 'Practice' : 'Official'}
-                    </span>
-                  </td> */}
-                  <td className="p-3 text-slate-600">
-                    {row.created_by}
-                  </td>
-                                     <td className="p-3 text-slate-600">
-                     {formatDate(row.created_on)}
-                   </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </tbody>
+                </table>
+              </div>
 
-        {/* Pagination */}
-        {pageCount > 1 && (
-          <div className="flex justify-center mt-6">
-            <nav className="flex items-center space-x-2">
-              <button
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => setPage(pageNum)}
-                  className={`px-3 py-2 text-sm font-medium rounded-md ${
-                    pageNum === page
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-              
-              <button
-                onClick={() => setPage(Math.min(pageCount, page + 1))}
-                disabled={page === pageCount}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </nav>
-          </div>
-        )}
-
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex">
+                  <button
+                    className={`px-2  text-xs border ${page === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-gray-50'}`}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >Prev</button>
+                  {[...Array(pageCount)].map((_, idx) => (
+                    <button
+                      key={idx}
+                      className={`px-2 py-1  text-xs  border ${page === idx + 1 ? 'bg-[#6d7efc] text-white' : 'bg-white hover:bg-gray-50'}`}
+                      onClick={() => setPage(idx + 1)}
+                    >{idx + 1}</button>
+                  ))}
+                  <button
+                    className={`px-2 text-xs  border ${page === pageCount || pageCount === 0 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-purple1050'}`}
+                    onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+                    disabled={page === pageCount || pageCount === 0}
+                  >Next</button>
+                </div>
+                <div className="text-xs text-gray-500">
+                  {pagedData.length > 0 && (
+                    <span>{(page - 1) * pageSize + 1}-{(page - 1) * pageSize + pagedData.length} of {filteredData.length}</span>
+                  )}
+                </div>
+              </div>
+            </div>
           </>
         ) : (
           /* Empty State - Show when no exams and not loading */
@@ -493,7 +474,6 @@ export default function AllGrandTestsPage() {
           )
         )}
       </div>
-    </div>
     {isUploadOpen && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => { if (!isUploading) { setIsUploadOpen(false); setSelectedFile(null); setUploadError(''); } }}>
         <div className="bg-white m-2 p-6 rounded shadow-lg w-full max-w-lg relative" onClick={(e) => e.stopPropagation()}>

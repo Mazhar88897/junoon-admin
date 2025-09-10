@@ -21,7 +21,7 @@ const allCategories = [
     // ],
   },
   {
-    key: "university",
+    key: "/dashboard/track-list/track/university",
     name: " University Management",
     subCount: 5,
     description: "Access and update all universities associated with this track",
