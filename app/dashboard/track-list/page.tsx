@@ -22,6 +22,20 @@ const customStyles = `
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
+// Inject ReactQuill CSS on the client only
+function useReactQuillCSS() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const existing = document.getElementById('react-quill-snow-css');
+    if (existing) return;
+    const link = document.createElement('link');
+    link.id = 'react-quill-snow-css';
+    link.rel = 'stylesheet';
+    link.href = 'https://cdn.jsdelivr.net/npm/react-quill@2.0.0/dist/quill.snow.css';
+    document.head.appendChild(link);
+  }, []);
+}
+
 interface Track {
   id: number;
   name: string;
