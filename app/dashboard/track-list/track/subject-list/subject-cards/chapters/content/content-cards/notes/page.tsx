@@ -9,6 +9,22 @@ const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 import { ExternalLink, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+// PDF utilities - inline to avoid import path issues
+const calculatePdfPages = async (file: File): Promise<number> => {
+  try {
+    const { PDFDocument } = await import('pdf-lib');
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    return pdfDoc.getPageCount();
+  } catch (error) {
+    console.error('Error calculating PDF pages:', error);
+    return 1;
+  }
+};
+
+const isValidPdf = (file: File): boolean => {
+  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+};
 
 interface Note {
   id: number;
@@ -23,6 +39,8 @@ interface Note {
   description: string;
   thumbnail: string | null;
   source: string;
+  note_url?: string | null;
+  note_pages?: number;
   chapter: number;
   topic: number | null;
 }
@@ -60,6 +78,7 @@ export default function NotesPage() {
     sourcePreview: '',
     thumbnail: null as File | null,
     thumbnailPreview: '',
+    note_pages: 1,
     created_by: 'Ateeq Ur Rehman',
   });
 
@@ -72,6 +91,7 @@ export default function NotesPage() {
     sourcePreview: '',
     thumbnail: null as File | null,
     thumbnailPreview: '',
+    note_pages: 1,
     modified_by: sessionStorage.getItem('user_email') || '',
   });
 
@@ -180,10 +200,20 @@ export default function NotesPage() {
     sessionStorage.setItem('note_description', note.description);
     sessionStorage.setItem('note_source', note.source);
     sessionStorage.setItem('note_thumbnail', note.thumbnail || '');
+    if (note.note_pages) {
+      sessionStorage.setItem('note_pages', note.note_pages.toString());
+    }
+    
     
     // Navigate to note detail page or open PDF
-    if (note.source) {
+    // Check note_url first, then source, then show blank if neither exists
+    if (note.note_url) {
+      window.open(note.note_url, '_blank');
+    } else if (note.source) {
       window.open(note.source, '_blank');
+    } else {
+      // No PDF available to open
+      toast.info('No PDF file available for this note');
     }
   };
 
@@ -197,6 +227,7 @@ export default function NotesPage() {
       sourcePreview: note.source || '',
       thumbnail: null,
       thumbnailPreview: note.thumbnail || '',
+      note_pages: 1, // Default value, will be updated if new PDF is selected
       modified_by: 'Ateeq Ur Rehman',
     });
     setShowEditModal(true);
@@ -231,26 +262,56 @@ export default function NotesPage() {
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
     const file = files?.[0] || null;
     if (file) {
+      let notePages = 1;
+      
+      // Calculate PDF pages if it's a source file (PDF)
+      if (name === 'source' && isValidPdf(file)) {
+        try {
+          console.log('Calculating pages for PDF:', file.name);
+          notePages = await calculatePdfPages(file);
+          console.log('Calculated pages:', notePages);
+        } catch (error) {
+          console.error('Error calculating PDF pages:', error);
+          notePages = 1;
+        }
+      }
+      
       setFormData(prev => ({
         ...prev,
         [name]: file,
         [`${name}Preview`]: name === 'thumbnail' ? URL.createObjectURL(file) : '',
+        note_pages: notePages,
       }));
     }
   };
 
-  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
     const file = files?.[0] || null;
     if (file) {
+      let notePages = 1;
+      
+      // Calculate PDF pages if it's a source file (PDF)
+      if (name === 'source' && isValidPdf(file)) {
+        try {
+          console.log('Calculating pages for PDF (edit):', file.name);
+          notePages = await calculatePdfPages(file);
+          console.log('Calculated pages (edit):', notePages);
+        } catch (error) {
+          console.error('Error calculating PDF pages:', error);
+          notePages = 1;
+        }
+      }
+      
       setEditFormData(prev => ({
         ...prev,
         [name]: file,
         [`${name}Preview`]: name === 'thumbnail' ? URL.createObjectURL(file) : '',
+        note_pages: notePages,
       }));
     }
   };
@@ -265,7 +326,7 @@ export default function NotesPage() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent, name: string, setFormData: React.Dispatch<React.SetStateAction<typeof formData>>, setDragActive: (active: boolean) => void) => {
+  const handleDrop = async (e: React.DragEvent, name: string, setFormData: React.Dispatch<React.SetStateAction<typeof formData>>, setDragActive: (active: boolean) => void) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -275,16 +336,31 @@ export default function NotesPage() {
       const isValidFile = name === 'source' ? file.type === 'application/pdf' : file.type.startsWith('image/');
       
       if (isValidFile) {
+        let notePages = 1;
+        
+        // Calculate PDF pages if it's a source file (PDF)
+        if (name === 'source' && isValidPdf(file)) {
+          try {
+            console.log('Calculating pages for PDF (drag):', file.name);
+            notePages = await calculatePdfPages(file);
+            console.log('Calculated pages (drag):', notePages);
+          } catch (error) {
+            console.error('Error calculating PDF pages:', error);
+            notePages = 1;
+          }
+        }
+        
         setFormData(prev => ({
           ...prev,
           [name]: file,
           [`${name}Preview`]: name === 'thumbnail' ? URL.createObjectURL(file) : '',
+          note_pages: notePages,
         }));
       }
     }
   };
 
-  const handleEditDrop = (e: React.DragEvent, name: string, setFormData: React.Dispatch<React.SetStateAction<typeof editFormData>>, setDragActive: (active: boolean) => void) => {
+  const handleEditDrop = async (e: React.DragEvent, name: string, setFormData: React.Dispatch<React.SetStateAction<typeof editFormData>>, setDragActive: (active: boolean) => void) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -294,10 +370,25 @@ export default function NotesPage() {
       const isValidFile = name === 'source' ? file.type === 'application/pdf' : file.type.startsWith('image/');
       
       if (isValidFile) {
+        let notePages = 1;
+        
+        // Calculate PDF pages if it's a source file (PDF)
+        if (name === 'source' && isValidPdf(file)) {
+          try {
+            console.log('Calculating pages for PDF (edit drag):', file.name);
+            notePages = await calculatePdfPages(file);
+            console.log('Calculated pages (edit drag):', notePages);
+          } catch (error) {
+            console.error('Error calculating PDF pages:', error);
+            notePages = 1;
+          }
+        }
+        
         setFormData(prev => ({
           ...prev,
           [name]: file,
           [`${name}Preview`]: name === 'thumbnail' ? URL.createObjectURL(file) : '',
+          note_pages: notePages,
         }));
       }
     }
@@ -313,11 +404,58 @@ export default function NotesPage() {
         throw new Error('No authorization token found');
       }
 
+      // Step 1: If a PDF is provided, request a signed URL and upload to S3, then use final_url as source
+      let uploadedSourceUrl: string | null = null;
+      if (formData.source) {
+        // Request signed URL from backend
+        const signedUrlResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contents_app/upload-url/`, {
+          method: 'POST',
+          headers: {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            file_name: formData.source.name,
+            file_type: formData.source.type || 'application/pdf',
+          }),
+        });
+
+        if (!signedUrlResp.ok) {
+          throw new Error('Failed to get signed upload URL');
+        }
+
+        const { upload_url, final_url } = await signedUrlResp.json();
+
+        // Step 2: Upload the file binary to S3 using the signed URL
+        const s3UploadResp = await fetch(upload_url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': formData.source.type || 'application/pdf',
+          },
+          body: formData.source,
+        });
+
+        if (!s3UploadResp.ok) {
+          throw new Error('Failed to upload file to storage');
+        }
+
+        uploadedSourceUrl = final_url as string;
+      }
+
+      // Step 3: Create note using final_url as source
       const formDataToSend = new FormData();
       formDataToSend.append('chapter', sessionStorage.getItem('chapter_id') || '');
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
-      if (formData.source) formDataToSend.append('source', formData.source);
+      formDataToSend.append('note_pages', formData.note_pages.toString());
+      
+      console.log('Sending note_pages to API:', formData.note_pages);
+      if (uploadedSourceUrl) {
+        formDataToSend.append('note_url', uploadedSourceUrl);
+      } else if (formData.source) {
+        // Fallback: if for some reason we have a file but no uploaded URL (should not happen), send file directly
+        formDataToSend.append('source', formData.source);
+      }
       if (formData.thumbnail) formDataToSend.append('thumbnail', formData.thumbnail);
       formDataToSend.append('created_by', sessionStorage.getItem('user_email') || '');
 
@@ -342,6 +480,7 @@ export default function NotesPage() {
         sourcePreview: '',
         thumbnail: null,
         thumbnailPreview: '',
+        note_pages: 1,
         created_by: 'Ateeq Ur Rehman',
       });
       setShowModal(false);
@@ -370,6 +509,9 @@ export default function NotesPage() {
       formDataToSend.append('chapter', sessionStorage.getItem('chapter_id') || '');
       formDataToSend.append('name', editFormData.name);
       formDataToSend.append('description', editFormData.description);
+      formDataToSend.append('note_pages', editFormData.note_pages.toString());
+      
+      console.log('Sending note_pages to API (edit):', editFormData.note_pages);
       
       // Handle source file - if new file selected, use it; otherwise preserve existing source
       if (editFormData.source) {
@@ -479,6 +621,7 @@ export default function NotesPage() {
       sourcePreview: '',
       thumbnail: null,
       thumbnailPreview: '',
+      note_pages: 1,
       created_by: 'Ateeq Ur Rehman',
     });
   };
@@ -494,6 +637,7 @@ export default function NotesPage() {
       sourcePreview: '',
       thumbnail: null,
       thumbnailPreview: '',
+      note_pages: 1,
       modified_by: 'Ateeq Ur Rehman',
     });
   };
@@ -549,7 +693,7 @@ export default function NotesPage() {
                 <th className="p-3 text-left">Thumbnail</th>
                 <th className="p-3 text-left">Name</th>
                 <th className="p-3 text-left">Description</th>
-                <th className="p-3 text-left">Chapter</th>
+                {/* <th className="p-3 text-left">Chapter</th> */}
                 <th className="p-3 text-left">Created</th>
                 <th className="p-3 text-left">Actions</th>
               </tr>
@@ -577,7 +721,7 @@ export default function NotesPage() {
                       dangerouslySetInnerHTML={{ __html: row.description }}
                     />
                   </td>
-                  <td className="p-3 text-left text-gray-600">{row.chapter}</td>
+                  {/* <td className="p-3 text-left text-gray-600">{row.note_pages}</td> */}
                   <td className="p-3 text-left text-gray-600">{formatDate(row.created_on)}</td>
                   <td className="p-3 text-left">
                     <div className="flex gap-2">
@@ -749,6 +893,7 @@ export default function NotesPage() {
                         {formData.source ? (
                           <div className="text-sm">
                             <p className="font-medium">{formData.source.name}</p>
+                            <p className="text-xs text-gray-500">Pages: {formData.note_pages}</p>
                             <p className="text-xs text-gray-500">Click or drag to replace</p>
                           </div>
                         ) : (
@@ -922,6 +1067,7 @@ export default function NotesPage() {
                         {editFormData.source ? (
                           <div className="text-sm">
                             <p className="font-medium">{editFormData.source.name}</p>
+                            <p className="text-xs text-gray-500">Pages: {editFormData.note_pages}</p>
                             <p className="text-xs text-gray-500">Click or drag to replace</p>
                           </div>
                         ) : (

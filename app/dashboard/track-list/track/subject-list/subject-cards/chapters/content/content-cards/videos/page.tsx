@@ -22,6 +22,8 @@ interface Video {
   description: string;
   thumbnail: string | null;
   video: string;
+  video_url?: string;
+  video_duration?: number;
   chapter: number;
   topic: number | null;
 }
@@ -88,11 +90,11 @@ const DragDropZone = ({
       
       // Validate file type
       if (file.type.startsWith(accept.split('/')[0]) || file.type.includes(accept.split('/')[1])) {
-        // Validate file size (100MB for videos, 10MB for images)
-        const maxSize = fileType === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+        // Validate file size (2GB for videos, 10MB for images)
+        const maxSize = fileType === 'video' ? 2 * 1024 * 1024 * 1024 : 10 * 1024 * 1024;
         if (file.size > maxSize) {
-          const maxSizeMB = maxSize / (1024 * 1024);
-          toast.error(`File too large. Maximum size is ${maxSizeMB}MB.`);
+          const maxSizeGB = maxSize / (1024 * 1024 * 1024);
+          toast.error(`File too large. Maximum size is ${maxSizeGB}GB.`);
           return;
         }
         
@@ -112,11 +114,11 @@ const DragDropZone = ({
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (100MB for videos, 10MB for images)
-      const maxSize = fileType === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+      // Validate file size (2GB for videos, 10MB for images)
+      const maxSize = fileType === 'video' ? 2 * 1024 * 1024 * 1024 : 10 * 1024 * 1024;
       if (file.size > maxSize) {
-        const maxSizeMB = maxSize / (1024 * 1024);
-        toast.error(`File too large. Maximum size is ${maxSizeMB}MB.`);
+        const maxSizeGB = maxSize / (1024 * 1024 * 1024);
+        toast.error(`File too large. Maximum size is ${maxSizeGB}GB.`);
         return;
       }
       
@@ -226,6 +228,11 @@ export default function RecordedLecturesPage() {
   const [videoToDelete, setVideoToDelete] = useState<Video | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedBytes, setUploadedBytes] = useState(0);
+  const [totalBytes, setTotalBytes] = useState(0);
+  const [uploadToastId, setUploadToastId] = useState<string | number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const pageSize = 10;
   const submitRef = useRef(false);
 
@@ -239,6 +246,7 @@ export default function RecordedLecturesPage() {
     thumbnail: null as File | null,
     thumbnailPreview: '',
     created_by: 'Ateeq Ur Rehman',
+    videoDuration: 0,
   });
 
   // Edit form state
@@ -251,6 +259,7 @@ export default function RecordedLecturesPage() {
     thumbnail: null as File | null,
     thumbnailPreview: '',
     created_by: '',
+    videoDuration: 0,
   });
 
   useEffect(() => {
@@ -398,15 +407,16 @@ export default function RecordedLecturesPage() {
 
   const handleVideoClick = (video: Video) => {
     // Store video details in session storage for the next page
+    const videoUrl = video.video_url || video.video;
     sessionStorage.setItem('video_id', video.id.toString());
     sessionStorage.setItem('video_name', video.name);
     sessionStorage.setItem('video_description', video.description);
-    sessionStorage.setItem('video_url', video.video);
+    sessionStorage.setItem('video_url', videoUrl);
     sessionStorage.setItem('video_thumbnail',video.thumbnail || '');
     
     // Open video in new tab
-    if (video.video) {
-      window.open(video.video, '_blank');
+    if (videoUrl) {
+      window.open(videoUrl, '_blank');
     }
   };
 
@@ -421,6 +431,7 @@ export default function RecordedLecturesPage() {
       thumbnail: null,
       thumbnailPreview: video.thumbnail || '',
       created_by: video.created_by,
+      videoDuration: 0,
     });
     setShowEditModal(true);
   };
@@ -505,12 +516,24 @@ export default function RecordedLecturesPage() {
   };
 
   // Drag and drop handlers for form
-  const handleVideoDrop = (file: File) => {
-    setFormData(prev => ({
-      ...prev,
-      video: file,
-      videoPreview: URL.createObjectURL(file),
-    }));
+  const handleVideoDrop = async (file: File) => {
+    try {
+      const duration = await getVideoDuration(file);
+      setFormData(prev => ({
+        ...prev,
+        video: file,
+        videoPreview: URL.createObjectURL(file),
+        videoDuration: duration,
+      }));
+    } catch (error) {
+      console.error('Error calculating video duration:', error);
+      setFormData(prev => ({
+        ...prev,
+        video: file,
+        videoPreview: URL.createObjectURL(file),
+        videoDuration: 0,
+      }));
+    }
   };
 
   const handleThumbnailDrop = (file: File) => {
@@ -537,13 +560,140 @@ export default function RecordedLecturesPage() {
     }));
   };
 
+  // Function to calculate video duration
+  const getVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(Math.round(video.duration));
+      };
+      
+      video.onerror = () => {
+        window.URL.revokeObjectURL(video.src);
+        reject(new Error('Error loading video metadata'));
+      };
+      
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Function to upload file with progress tracking
+  const uploadFileWithProgress = async (url: string, file: File, onProgress: (progress: number, loaded: number, total: number) => void): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      
+      // Set timeout for very large files (30 minutes)
+      xhr.timeout = 30 * 60 * 1000;
+      
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          onProgress(progress, event.loaded, event.total);
+        }
+      });
+      
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed with status: ${xhr.status}`));
+        }
+      });
+      
+      xhr.addEventListener('error', () => {
+        reject(new Error('Upload failed'));
+      });
+      
+      xhr.addEventListener('timeout', () => {
+        reject(new Error('Upload timeout - file may be too large or connection is slow'));
+      });
+      
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload was cancelled'));
+      });
+      
+      xhr.open('PUT', url);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+    });
+  };
+
+  // Function to show upload progress toast
+  const showUploadProgress = (fileName: string, fileSize: number) => {
+    const sizeText = fileSize > 1024 * 1024 * 1024 
+      ? `${(fileSize / (1024 * 1024 * 1024)).toFixed(2)} GB`
+      : `${(fileSize / (1024 * 1024)).toFixed(2)} MB`;
+    
+    const toastId = toast.loading(`Uploading ${fileName} (${sizeText})... 0%`, {
+      duration: Infinity,
+    });
+    setUploadToastId(toastId);
+    return toastId;
+  };
+
+  // Function to update upload progress toast
+  const updateUploadProgress = (progress: number, fileName: string, fileSize: number, uploadedBytes?: number) => {
+    if (uploadToastId) {
+      const sizeText = fileSize > 1024 * 1024 * 1024 
+        ? `${(fileSize / (1024 * 1024 * 1024)).toFixed(2)} GB`
+        : `${(fileSize / (1024 * 1024)).toFixed(2)} MB`;
+      
+      let progressText = `Uploading ${fileName} (${sizeText})... ${progress}%`;
+      
+      if (uploadedBytes && fileSize > 100 * 1024 * 1024) { // Show byte progress for files > 100MB
+        const uploadedText = uploadedBytes > 1024 * 1024 * 1024 
+          ? `${(uploadedBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+          : `${(uploadedBytes / (1024 * 1024)).toFixed(2)} MB`;
+        progressText = `Uploading ${fileName}... ${uploadedText} / ${sizeText} (${progress}%)`;
+      }
+      
+      toast.loading(progressText, {
+        id: uploadToastId,
+        duration: Infinity,
+      });
+    }
+  };
+
+  // Function to complete upload progress toast
+  const completeUploadProgress = (fileName: string, success: boolean = true) => {
+    if (uploadToastId) {
+      if (success) {
+        toast.success(`Successfully uploaded ${fileName}`, {
+          id: uploadToastId,
+          duration: 3000,
+        });
+      } else {
+        toast.error(`Failed to upload ${fileName}`, {
+          id: uploadToastId,
+          duration: 5000,
+        });
+      }
+      setUploadToastId(null);
+    }
+  };
+
   // Drag and drop handlers for edit form
-  const handleEditVideoDrop = (file: File) => {
-    setEditFormData(prev => ({
-      ...prev,
-      video: file,
-      videoPreview: URL.createObjectURL(file),
-    }));
+  const handleEditVideoDrop = async (file: File) => {
+    try {
+      const duration = await getVideoDuration(file);
+      setEditFormData(prev => ({
+        ...prev,
+        video: file,
+        videoPreview: URL.createObjectURL(file),
+        videoDuration: duration,
+      }));
+    } catch (error) {
+      console.error('Error calculating video duration:', error);
+      setEditFormData(prev => ({
+        ...prev,
+        video: file,
+        videoPreview: URL.createObjectURL(file),
+        videoDuration: 0,
+      }));
+    }
   };
 
   const handleEditThumbnailDrop = (file: File) => {
@@ -588,28 +738,89 @@ export default function RecordedLecturesPage() {
         throw new Error('No authorization token found');
       }
 
-      const formDataToSend = new FormData();
-      formDataToSend.append('chapter', sessionStorage.getItem('chapter_id') || '');
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('description', formData.description);
-      if (formData.video) formDataToSend.append('video', formData.video);
-      if (formData.thumbnail) formDataToSend.append('thumbnail', formData.thumbnail);
-      formDataToSend.append('created_by', sessionStorage.getItem('user_email') || '');
+      if (!formData.video) {
+        toast.error('Video file is required');
+        return;
+      }
+
+      // Step 1: Get signed URL for video upload
+      const signedUrlResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contents_app/upload-url/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file_name: formData.video.name,
+          file_type: formData.video.type
+        }),
+      });
+
+      if (!signedUrlResponse.ok) {
+        toast.error('Failed to get upload URL');
+        return;
+      }
+
+      const signedUrlData = await signedUrlResponse.json();
+      const { upload_url, final_url } = signedUrlData;
+
+      // Step 2: Upload video to S3 using signed URL with progress tracking
+      setIsUploading(true);
+      showUploadProgress(formData.video.name, formData.video.size);
+      
+      try {
+        await uploadFileWithProgress(upload_url, formData.video, (progress, loaded, total) => {
+          setUploadProgress(progress);
+          setUploadedBytes(loaded);
+          setTotalBytes(total);
+          updateUploadProgress(progress, formData.video!.name, formData.video!.size, loaded);
+        });
+        completeUploadProgress(formData.video.name, true);
+      } catch (error) {
+        completeUploadProgress(formData.video.name, false);
+        toast.error('Failed to upload video to S3');
+        return;
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadedBytes(0);
+        setTotalBytes(0);
+      }
+
+      // Step 3: Create video record with final_url and video_duration
+      const videoData = {
+        chapter: sessionStorage.getItem('chapter_id') || '',
+        name: formData.name,
+        description: formData.description,
+        video_url: final_url,
+        video_duration: formData.videoDuration,
+        created_by: sessionStorage.getItem('user_email') || '',
+      };
+
+      // Add thumbnail if present
+      if (formData.thumbnail) {
+        const thumbnailFormData = new FormData();
+        thumbnailFormData.append('thumbnail', formData.thumbnail);
+        // Note: You might need to handle thumbnail upload separately or include it in the main request
+      }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contents_app/videos/`, {
         method: 'POST',
         headers: {
           'Authorization': token,
+          'Content-Type': 'application/json',
         },
-        body: formDataToSend,
+        body: JSON.stringify(videoData),
       });
 
       if (!response.ok) {
-        toast.error('Failed to create video - source file is required');
+        toast.error('Failed to create video record');
         return;
       }
+      
       toast.success('Video created successfully');
-      // Reset form and close modal
+      
+      // Reset form but keep modal open for multiple uploads
       setFormData({
         chapter: '',
         name: '',
@@ -619,8 +830,8 @@ export default function RecordedLecturesPage() {
         thumbnail: null,
         thumbnailPreview: '',
         created_by: 'Ateeq Ur Rehman',
+        videoDuration: 0,
       });
-      setShowModal(false);
 
       // Refresh videos list
       window.location.reload();
@@ -632,7 +843,7 @@ export default function RecordedLecturesPage() {
       setIsSubmitting(false);
       submitRef.current = false;
     }
-  }, [isSubmitting, formData.name, formData.description, formData.video, formData.thumbnail]);
+  }, [isSubmitting, formData.name, formData.description, formData.video, formData.thumbnail, formData.videoDuration]);
 
   const closeModal = () => {
     setShowModal(false);
@@ -645,6 +856,7 @@ export default function RecordedLecturesPage() {
       thumbnail: null,
       thumbnailPreview: '',
       created_by: 'Ateeq Ur Rehman',
+      videoDuration: 0,
     });
     // Reset submission ref when modal is closed
     submitRef.current = false;
@@ -667,24 +879,80 @@ export default function RecordedLecturesPage() {
         throw new Error('No authorization token found');
       }
 
-      const formDataToSend = new FormData();
-      formDataToSend.append('chapter', editFormData.chapter);
-      formDataToSend.append('name', editFormData.name);
-      formDataToSend.append('description', editFormData.description);
-      if (editFormData.video) formDataToSend.append('video', editFormData.video);
-      if (editFormData.thumbnail) formDataToSend.append('thumbnail', editFormData.thumbnail);
-      formDataToSend.append('created_by', editFormData.created_by);
+      let videoUrl = selectedVideo?.video; // Keep existing video URL if no new video is uploaded
+      let videoDuration = 0;
+
+      // If a new video is uploaded, follow the same flow as create
+      if (editFormData.video) {
+        // Step 1: Get signed URL for video upload
+        const signedUrlResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contents_app/upload-url/`, {
+          method: 'POST',
+          headers: {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            file_name: editFormData.video.name,
+            file_type: editFormData.video.type
+          }),
+        });
+
+        if (!signedUrlResponse.ok) {
+          toast.error('Failed to get upload URL');
+          return;
+        }
+
+        const signedUrlData = await signedUrlResponse.json();
+        const { upload_url, final_url } = signedUrlData;
+
+        // Step 2: Upload video to S3 using signed URL with progress tracking
+        setIsUploading(true);
+        showUploadProgress(editFormData.video.name, editFormData.video.size);
+        
+        try {
+          await uploadFileWithProgress(upload_url, editFormData.video, (progress, loaded, total) => {
+            setUploadProgress(progress);
+            setUploadedBytes(loaded);
+            setTotalBytes(total);
+            updateUploadProgress(progress, editFormData.video!.name, editFormData.video!.size, loaded);
+          });
+          completeUploadProgress(editFormData.video.name, true);
+        } catch (error) {
+          completeUploadProgress(editFormData.video.name, false);
+          toast.error('Failed to upload video to S3');
+          return;
+        } finally {
+          setIsUploading(false);
+          setUploadProgress(0);
+          setUploadedBytes(0);
+          setTotalBytes(0);
+        }
+
+        videoUrl = final_url;
+        videoDuration = editFormData.videoDuration;
+      }
+
+      // Step 3: Update video record
+      const videoData = {
+        chapter: editFormData.chapter,
+        name: editFormData.name,
+        description: editFormData.description,
+        video_url: videoUrl,
+        video_duration: videoDuration,
+        created_by: editFormData.created_by,
+      };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contents_app/videos/${selectedVideo?.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': token,
+          'Content-Type': 'application/json',
         },
-        body: formDataToSend,
+        body: JSON.stringify(videoData),
       });
 
       if (!response.ok) {
-       toast.error('Failed to update video - source file is required');
+       toast.error('Failed to update video');
        return;
       }
 
@@ -704,6 +972,7 @@ export default function RecordedLecturesPage() {
         thumbnail: null,
         thumbnailPreview: '',
         created_by: '',
+        videoDuration: 0,
       });
 
     } catch (err) {
@@ -726,6 +995,7 @@ export default function RecordedLecturesPage() {
       thumbnail: null,
       thumbnailPreview: '',
       created_by: '',
+      videoDuration: 0,
     });
     submitRef.current = false;
     setIsSubmitting(false);
@@ -952,16 +1222,40 @@ export default function RecordedLecturesPage() {
                 </div>
               </div>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <DragDropZone
-                onFileDrop={handleVideoDrop}
-                accept="video/*"
-                preview={formData.videoPreview}
-                onRemove={handleVideoRemove}
-                label="Video"
-                required={true}
-                icon={VideoIcon}
-                fileType="video"
-              />
+              <div>
+                <DragDropZone
+                  onFileDrop={handleVideoDrop}
+                  accept="video/*"
+                  preview={formData.videoPreview}
+                  onRemove={handleVideoRemove}
+                  label="Video"
+                  required={true}
+                  icon={VideoIcon}
+                  fileType="video"
+                />
+                {formData.video && (
+                  <div className="mt-2 space-y-1 text-sm text-gray-600">
+                    {formData.videoDuration > 0 && (
+                      <div>Duration: {Math.floor(formData.videoDuration / 60)}:{(formData.videoDuration % 60).toString().padStart(2, '0')}</div>
+                    )}
+                    <div>Size: {formData.video.size > 1024 * 1024 * 1024 
+                      ? `${(formData.video.size / (1024 * 1024 * 1024)).toFixed(2)} GB`
+                      : `${(formData.video.size / (1024 * 1024)).toFixed(2)} MB`
+                    }</div>
+                    <div className="text-xs text-gray-500">
+                      Estimated upload time: {formData.video.size > 1024 * 1024 * 1024
+                        ? `${Math.ceil(formData.video.size / (1024 * 1024 * 1024) * 10)} minutes`
+                        : `${Math.ceil(formData.video.size / (1024 * 1024) / 2)} minutes`
+                      }
+                    </div>
+                    {formData.video.size > 500 * 1024 * 1024 && (
+                      <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded mt-2">
+                        ⚠️ Large file detected. Upload may take several minutes. Please keep this tab open during upload.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <DragDropZone
                 onFileDrop={handleThumbnailDrop}
                 accept="image/*"
@@ -1034,20 +1328,59 @@ export default function RecordedLecturesPage() {
               {error && showModal && (
                 <div className="text-red-500 text-sm mt-2 text-center">{error}</div>
               )}
+              {/* Upload Progress Bar */}
+              {isUploading && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Uploading video...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-[#1A4D2E] h-2 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 ">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 focus:outline-none"
+                  disabled={isUploading}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
+                {/* <button
+                  type="button"
+                  onClick={() => {
+                    // Reset form for another video
+                    setFormData({
+                      chapter: '',
+                      name: '',
+                      description: '',
+                      video: null,
+                      videoPreview: '',
+                      thumbnail: null,
+                      thumbnailPreview: '',
+                      created_by: 'Ateeq Ur Rehman',
+                      videoDuration: 0,
+                    });
+                    setError('');
+                  }}
+                  disabled={isSubmitting || isUploading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Clear Form
+                </button> */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isUploading}
                   className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md font-medium hover:bg-[#1A4D2E] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create'}
+                  {isUploading ? `Uploading... ${uploadProgress}%` : isSubmitting ? 'Creating...' : 'Create Video'}
                 </button>
               </div>
             </form>
@@ -1097,16 +1430,40 @@ export default function RecordedLecturesPage() {
                 </div>
               </div>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <DragDropZone
-                  onFileDrop={handleEditVideoDrop}
-                  accept="video/*"
-                  preview={editFormData.videoPreview}
-                  onRemove={handleEditVideoRemove}
-                  label="Video"
-                  required={false}
-                  icon={VideoIcon}
-                  fileType="video"
-                />
+                <div>
+                  <DragDropZone
+                    onFileDrop={handleEditVideoDrop}
+                    accept="video/*"
+                    preview={editFormData.videoPreview}
+                    onRemove={handleEditVideoRemove}
+                    label="Video"
+                    required={false}
+                    icon={VideoIcon}
+                    fileType="video"
+                  />
+                  {editFormData.video && (
+                    <div className="mt-2 space-y-1 text-sm text-gray-600">
+                      {editFormData.videoDuration > 0 && (
+                        <div>Duration: {Math.floor(editFormData.videoDuration / 60)}:{(editFormData.videoDuration % 60).toString().padStart(2, '0')}</div>
+                      )}
+                      <div>Size: {editFormData.video.size > 1024 * 1024 * 1024 
+                        ? `${(editFormData.video.size / (1024 * 1024 * 1024)).toFixed(2)} GB`
+                        : `${(editFormData.video.size / (1024 * 1024)).toFixed(2)} MB`
+                      }</div>
+                      <div className="text-xs text-gray-500">
+                        Estimated upload time: {editFormData.video.size > 1024 * 1024 * 1024
+                          ? `${Math.ceil(editFormData.video.size / (1024 * 1024 * 1024) * 10)} minutes`
+                          : `${Math.ceil(editFormData.video.size / (1024 * 1024) / 2)} minutes`
+                        }
+                      </div>
+                      {editFormData.video.size > 500 * 1024 * 1024 && (
+                        <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded mt-2">
+                          ⚠️ Large file detected. Upload may take several minutes. Please keep this tab open during upload.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <DragDropZone
                   onFileDrop={handleEditThumbnailDrop}
                   accept="image/*"
@@ -1191,20 +1548,38 @@ export default function RecordedLecturesPage() {
               {error && showEditModal && (
                 <div className="text-red-500 text-sm mt-2 text-center">{error}</div>
               )}
+              
+              {/* Upload Progress Bar */}
+              {isUploading && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Uploading video...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-[#1A4D2E] h-2 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={closeEditModal}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 focus:outline-none"
+                  disabled={isUploading}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isUploading}
                   className="px-4 py-2 bg-[#1A4D2E] text-white rounded-md font-medium hover:bg-[#1A4D2E] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Updating...' : 'Update Video'}
+                  {isUploading ? `Uploading... ${uploadProgress}%` : isSubmitting ? 'Updating...' : 'Update Video'}
                 </button>
               </div>
             </form>
@@ -1234,9 +1609,9 @@ export default function RecordedLecturesPage() {
                 className="w-full h-auto max-h-[70vh]"
                 poster={selectedVideo.thumbnail || undefined}
               >
-                <source src={selectedVideo.video} type="video/mp4" />
-                <source src={selectedVideo.video} type="video/webm" />
-                <source src={selectedVideo.video} type="video/ogg" />
+                <source src={selectedVideo.video_url || selectedVideo.video} type="video/mp4" />
+                <source src={selectedVideo.video_url || selectedVideo.video} type="video/webm" />
+                <source src={selectedVideo.video_url || selectedVideo.video} type="video/ogg" />
                 Your browser does not support the video tag.
               </video>
               {/* Fullscreen Button */}
